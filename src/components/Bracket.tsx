@@ -25,13 +25,15 @@ function Side({
   return (
     <div
       className={`flex items-center justify-between gap-2 px-3 py-1.5 ${
-        isWinner ? "text-ink" : faded ? "text-ink-muted/60" : "text-ink-muted"
+        isWinner ? "text-ink" : faded ? "text-ink-muted/60 line-through decoration-danger/40" : "text-ink-muted"
       }`}
     >
       <span className="flex items-center gap-1.5 truncate">
         {isWinner && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gremio" />}
-        <span className="truncate text-sm">{label ?? "—"}</span>
-        {isPenWinner && <span className="text-[10px] text-branco">pên</span>}
+        <span className={`truncate text-sm ${label ? "" : "italic text-ink-muted/50"}`}>
+          {label ?? "Aguardando…"}
+        </span>
+        {isPenWinner && <span className="text-[10px] font-semibold text-branco">pên</span>}
       </span>
       <span className={`font-display text-lg leading-none ${isWinner ? "text-gremio" : ""}`}>
         {goals ?? "–"}
@@ -56,13 +58,35 @@ export function MatchCard({
   const loser = match ? matchLoser(match) : null;
   const penUsed =
     match && match.home_goals != null && match.away_goals != null && match.home_goals === match.away_goals;
-  const border = accent === "branco" ? "border-branco/40" : "border-line";
+
+  const bothSet = !!match?.home_id && !!match?.away_id;
+  const played = match?.home_goals != null && match?.away_goals != null;
+  // "a jogar" = os dois definidos mas sem placar → pulsa (ao vivo)
+  const liveNext = bothSet && !played;
+
+  const border =
+    accent === "branco"
+      ? "border-branco/40"
+      : liveNext
+        ? "border-gremio/50"
+        : "border-line";
 
   return (
-    <div className={`rounded-xl border ${border} bg-base/50`}>
+    <div
+      className={`rounded-xl border ${border} bg-base/50 ${liveNext ? "animate-pulseAzul" : ""}`}
+    >
       {title && (
-        <div className="border-b border-line px-3 py-1 font-display text-xs tracking-widest text-ink-muted">
-          {title}
+        <div className="flex items-center justify-between border-b border-line px-3 py-1">
+          <span className="font-display text-xs tracking-widest text-ink-muted">{title}</span>
+          {match && (
+            <span
+              className={`text-[9px] font-semibold uppercase tracking-wide ${
+                played ? "text-gremio" : liveNext ? "text-branco" : "text-ink-muted/50"
+              }`}
+            >
+              {played ? "encerrado" : liveNext ? "a jogar" : "aguardando"}
+            </span>
+          )}
         </div>
       )}
       <div className="divide-y divide-line/60">
@@ -94,13 +118,20 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
   return (
     <div className="space-y-5">
       {championId && (
-        <div className="panel border-branco/40 p-5 text-center animate-reveal" style={{ borderColor: "rgba(27,157,224,0.5)", boxShadow: "0 0 40px rgba(27,157,224,0.15)" }}>
-          <div className="font-display text-sm tracking-[0.3em] text-branco">CAMPEÃO</div>
+        <div
+          className="panel p-5 text-center animate-reveal"
+          style={{ borderColor: "rgba(27,157,224,0.5)", boxShadow: "0 0 40px rgba(27,157,224,0.15)" }}
+        >
+          <div className="font-display text-sm tracking-[0.3em] text-gremio">CAMPEÃO</div>
           <div className="mt-1 font-display text-4xl text-branco sm:text-5xl">🏆 {name(championId)}</div>
           {runnerUpId && (
             <div className="mt-1 text-sm text-ink-muted">Vice-campeão: {name(runnerUpId)}</div>
           )}
-          {third && <div className="text-sm text-ink-muted">3º lugar: {name(third)}</div>}
+          {third && (
+            <div className="text-sm text-ink-muted">
+              3º lugar: <span className="text-branco">{name(third)}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -117,18 +148,23 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
         {/* Semis */}
         <div className="space-y-3 md:pt-9">
           <h3 className="font-display text-lg tracking-wide text-ink-muted">Semifinais</h3>
-          <MatchCard match={bySlot("SF_A")} players={players} title="Semi A" />
-          <MatchCard match={bySlot("SF_B")} players={players} title="Semi B" />
+          <MatchCard match={bySlot("SF_A")} players={players} title="Semi A · venc. QF1 × venc. QF2" />
+          <MatchCard match={bySlot("SF_B")} players={players} title="Semi B · venc. QF3 × venc. QF4" />
         </div>
 
         {/* Final + Terceiro */}
         <div className="space-y-3 md:pt-9">
-          <h3 className="font-display text-lg tracking-wide text-branco">Final</h3>
+          <h3 className="font-display text-lg tracking-wide text-gremio">Final</h3>
           <MatchCard match={bySlot("FINAL")} players={players} title="FINAL" accent="branco" />
           <h3 className="pt-2 font-display text-lg tracking-wide text-ink-muted">3º lugar</h3>
           <MatchCard match={bySlot("TERCEIRO")} players={players} title="Disputa de 3º" />
         </div>
       </div>
+
+      <p className="text-center text-xs text-ink-muted">
+        O chaveamento avança sozinho: ao lançar cada placar, o vencedor sobe para a próxima fase em
+        tempo real.
+      </p>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export default function ClassificacaoPage() {
               Zona de classificação (Top 8)
             </span>
             <span>P pontos · J jogos · V vitórias · E empates · D derrotas</span>
-            <span>GP gols pró · GC gols contra · SG saldo</span>
+            <span>GP gols marcados · GC gols sofridos · SG saldo</span>
           </p>
         </>
       )}

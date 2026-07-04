@@ -28,8 +28,8 @@ export function StandingsTable({
             <th className={numCls}>V</th>
             <th className={numCls}>E</th>
             <th className={numCls}>D</th>
-            <th className={`${numCls} hidden sm:table-cell`}>GP</th>
-            <th className={`${numCls} hidden sm:table-cell`}>GC</th>
+            <th className={`${numCls}`}>GP</th>
+            <th className={`${numCls}`}>GC</th>
             <th className={numCls}>SG</th>
           </tr>
         </thead>
@@ -71,8 +71,8 @@ export function StandingsTable({
                 <td className={numCls}>{r.wins}</td>
                 <td className={numCls}>{r.draws}</td>
                 <td className={numCls}>{r.losses}</td>
-                <td className={`${numCls} hidden sm:table-cell`}>{r.goalsFor}</td>
-                <td className={`${numCls} hidden sm:table-cell`}>{r.goalsAgainst}</td>
+                <td className={`${numCls}`}>{r.goalsFor}</td>
+                <td className={`${numCls}`}>{r.goalsAgainst}</td>
                 <td className={`${numCls} ${r.goalDiff > 0 ? "text-gremio" : r.goalDiff < 0 ? "text-danger" : ""}`}>
                   {r.goalDiff > 0 ? `+${r.goalDiff}` : r.goalDiff}
                 </td>

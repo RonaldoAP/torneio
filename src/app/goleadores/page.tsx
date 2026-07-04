@@ -7,7 +7,6 @@ import { PageHeader, LiveBadge, EmptyState, Loading } from "@/components/ui";
 export default function GoleadoresPage() {
   const { players, matches, mode, connected, loading } = useTournament();
   const rows = computeScorers(players, matches).filter((r) => r.goals > 0);
-  const max = rows[0]?.goals ?? 0;
 
   return (
     <div className="animate-reveal">
@@ -24,32 +23,41 @@ export default function GoleadoresPage() {
           <p>Nenhum gol registrado ainda.</p>
         </EmptyState>
       ) : (
-        <ol className="space-y-2">
-          {rows.map((r, i) => (
-            <li key={r.playerId} className="panel flex items-center gap-3 p-3 animate-reveal">
-              <span
-                className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg font-display text-lg ${
-                  i === 0 ? "bg-branco/20 text-branco" : "bg-white/5 text-ink-muted"
-                }`}
-              >
-                {i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-ink">{r.name}</span>
-                  <span className="shrink-0 text-xs text-ink-muted">{r.games} jogos</span>
-                </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-                  <div
-                    className={`h-full rounded-full ${i === 0 ? "bg-branco" : "bg-gremio"}`}
-                    style={{ width: `${max ? (r.goals / max) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
-              <span className="font-display text-3xl leading-none text-ink">{r.goals}</span>
-            </li>
-          ))}
-        </ol>
+        <div className="panel overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-line text-ink-muted">
+                <th className="px-3 py-2 text-center">#</th>
+                <th className="px-3 py-2 text-left">Participante</th>
+                <th className="px-3 py-2 text-center">Jogos</th>
+                <th className="px-3 py-2 text-center">Gols marcados</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr
+                  key={r.playerId}
+                  className={`border-b border-line/60 animate-reveal ${i === 0 ? "bg-gremio/[0.06]" : ""}`}
+                >
+                  <td className="px-3 py-2.5 text-center">
+                    <span
+                      className={`inline-grid h-7 w-7 place-items-center rounded-md font-display ${
+                        i === 0 ? "bg-gremio/20 text-gremio" : "text-ink-muted"
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-left text-ink">{r.name}</td>
+                  <td className="px-3 py-2.5 text-center tabular text-ink-muted">{r.games}</td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className="font-display text-2xl leading-none text-ink">{r.goals}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
