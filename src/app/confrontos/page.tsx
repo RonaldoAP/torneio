@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTournament } from "@/lib/useTournament";
-import { PageHeader, LiveBadge, EmptyState, Loading, useNameMap } from "@/components/ui";
+import { adminActions } from "@/lib/adminActions";
+import { PageHeader, LiveBadge, Loading, useNameMap } from "@/components/ui";
 import type { Match } from "@/lib/types";
 
 export default function ConfrontosPage() {
   const { players, matches, mode, connected, loading } = useTournament();
   const name = useNameMap(players);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const rounds = useMemo(() => {
     const liga = matches.filter((m) => m.stage === "liga");
@@ -17,68 +20,114 @@ export default function ConfrontosPage() {
       if (!byRound.has(r)) byRound.set(r, []);
       byRound.get(r)!.push(m);
     }
-    const allIds = players.map((p) => p.id);
     return [...byRound.entries()]
       .sort((a, b) => a[0] - b[0])
-      .map(([round, games]) => {
-        const playing = new Set<string>();
-        for (const g of games) {
-          if (g.home_id) playing.add(g.home_id);
-          if (g.away_id) playing.add(g.away_id);
-        }
-        const byes = allIds.filter((id) => !playing.has(id));
-        return { round, games, byes };
-      });
-  }, [matches, players]);
+      .map(([round, games]) => ({ round, games }));
+  }, [matches]);
+
+  const hasGames = rounds.length > 0;
+
+  async function sortear(refazer: boolean) {
+    if (players.length < 2) {
+      setError("Cadastre pelo menos 2 participantes para sortear.");
+      return;
+    }
+    if (refazer && !confirm("Refazer o sorteio? Isso reinicia todos os placares da liga.")) return;
+    setError(null);
+    setBusy(true);
+    try {
+      await adminActions.generateLeague();
+    } catch (e: any) {
+      setError(e?.message ?? "Não foi possível sortear.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="animate-reveal">
       <PageHeader
         title="Confrontos"
-        subtitle="Fase de liga — turno único"
+        subtitle="Fase de liga — todos contra todos, turno único"
         right={<LiveBadge mode={mode} connected={connected} />}
       />
 
+      {/* Botão de sorteio pronto */}
+      <div className="mb-4 panel flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="font-display text-lg tracking-wide text-ink">Sorteio dos jogos</p>
+          <p className="text-xs text-ink-muted">
+            Todos jogam contra todos (turno único). Os 8 primeiros da classificação se classificam
+            para o mata-mata.
+          </p>
+        </div>
+        <button
+          className="btn-primary shrink-0"
+          disabled={busy || players.length < 2}
+          onClick={() => sortear(hasGames)}
+        >
+          {busy ? "Sorteando…" : hasGames ? "Refazer sorteio" : "Sortear confrontos"}
+        </button>
+      </div>
+      {error && (
+        <p className="mb-4 rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
       {loading ? (
         <Loading />
-      ) : rounds.length === 0 ? (
-        <EmptyState>
-          <p>A tabela da liga ainda não foi gerada.</p>
-          <p className="mt-1 text-sm">O admin gera os confrontos quando as inscrições fecharem.</p>
-        </EmptyState>
+      ) : !hasGames ? (
+        <div className="panel grid place-items-center px-6 py-12 text-center text-ink-muted">
+          <p>Nenhum confronto sorteado ainda.</p>
+          <p className="mt-1 text-sm">
+            {players.length < 2
+              ? "Cadastre os participantes para liberar o sorteio."
+              : "Clique em “Sortear confrontos” acima para gerar a tabela."}
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {rounds.map(({ round, games, byes }) => (
+          {rounds.map(({ round, games }) => (
             <section key={round} className="panel p-3 sm:p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-display text-xl tracking-wide text-ink">Rodada {round}</h2>
-                {byes.length > 0 && (
-                  <span className="chip">Folga: {byes.map((id) => name(id)).join(", ")}</span>
-                )}
               </div>
               <ul className="grid gap-2">
                 {games.map((g) => {
                   const played = g.home_goals != null && g.away_goals != null;
+                  const homeWin = played && (g.home_goals as number) > (g.away_goals as number);
+                  const awayWin = played && (g.away_goals as number) > (g.home_goals as number);
+
+                  const win = "text-emerald-400 font-semibold";
+                  const lose = "text-danger";
+                  const homeCls = homeWin ? win : awayWin ? lose : "text-ink";
+                  const awayCls = awayWin ? win : homeWin ? lose : "text-ink";
+
                   return (
                     <li
                       key={g.id}
                       className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border px-3 py-2 ${
-                        played
-                          ? "border-gremio/25 bg-gremio/5"
-                          : "border-line bg-base/40"
+                        played ? "border-line bg-white/[0.03]" : "border-line bg-base/40"
                       }`}
                     >
-                      <span className="truncate text-right text-ink">{name(g.home_id)}</span>
+                      <span className={`truncate text-right ${played ? homeCls : "text-ink"}`}>
+                        {name(g.home_id)}
+                      </span>
                       <span className="min-w-[74px] text-center">
                         {played ? (
-                          <span className="font-display text-2xl leading-none text-ink">
-                            {g.home_goals} <span className="text-ink-muted">×</span> {g.away_goals}
+                          <span className="font-display text-2xl leading-none">
+                            <span className={homeCls}>{g.home_goals}</span>
+                            <span className="text-ink-muted"> × </span>
+                            <span className={awayCls}>{g.away_goals}</span>
                           </span>
                         ) : (
                           <span className="font-display text-xl leading-none text-ink-muted">VS</span>
                         )}
                       </span>
-                      <span className="truncate text-left text-ink">{name(g.away_id)}</span>
+                      <span className={`truncate text-left ${played ? awayCls : "text-ink"}`}>
+                        {name(g.away_id)}
+                      </span>
                     </li>
                   );
                 })}
