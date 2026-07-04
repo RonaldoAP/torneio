@@ -53,6 +53,11 @@ export function writeLocal(state: TournamentState) {
   window.dispatchEvent(new CustomEvent(LOCAL_EVENT));
 }
 
+/** Apaga tudo e volta ao estado inicial (só faz sentido no modo local). */
+export function resetLocal() {
+  writeLocal(emptyState());
+}
+
 function mutate(fn: (s: TournamentState) => void) {
   const s = readLocal();
   fn(s);

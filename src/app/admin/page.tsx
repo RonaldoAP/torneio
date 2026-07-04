@@ -194,9 +194,10 @@ function AdminDashboard({
       </div>
 
       {isLocal && (
-        <p className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm text-gold">
-          Supabase não configurado — rodando em modo local (só este dispositivo, sem tempo real
-          entre aparelhos). Configure as variáveis para o modo compartilhado.
+        <p className="rounded-xl border border-line bg-white/5 p-3 text-sm text-ink-muted">
+          <strong className="text-ink">Modo local</strong> — os dados ficam salvos só neste
+          navegador/dispositivo (sem servidor). Use <strong>Exportar JSON</strong> para backup.
+          Quando quiser tempo real entre aparelhos, configure o Supabase (veja o README).
         </p>
       )}
       {error && <p className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
@@ -418,7 +419,24 @@ function AdminDashboard({
               }}
             />
           </label>
+          {isLocal && (
+            <button
+              className="btn-danger"
+              onClick={() => {
+                if (confirm("Apagar TODO o torneio deste dispositivo e recomeçar do zero?")) {
+                  act(() => adminActions.resetLocal(), "Torneio reiniciado.");
+                }
+              }}
+            >
+              Reiniciar torneio (apagar tudo)
+            </button>
+          )}
         </div>
+        {isLocal && (
+          <p className="mt-2 text-xs text-ink-muted">
+            Dica: exporte o JSON antes de reiniciar se quiser guardar o resultado.
+          </p>
+        )}
       </section>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { Config, Match, Player, TournamentState } from "./types";
 import { isSupabaseConfigured } from "./supabase/client";
-import { readLocal, writeLocal, localApi } from "./localStore";
+import { readLocal, writeLocal, resetLocal, localApi } from "./localStore";
 import { generateRoundRobin } from "./roundRobin";
 import { computeStandings } from "./standings";
 import { seedBracket, recomputeBracket } from "./bracket";
@@ -122,6 +122,9 @@ async function localAction(action: string, payload: any) {
     case "import_state":
       writeLocal(payload as TournamentState);
       return;
+    case "reset_local":
+      resetLocal();
+      return;
     default:
       throw new Error("Ação desconhecida.");
   }
@@ -156,4 +159,6 @@ export const adminActions = {
   closeTournament: () => adminActions.run("close_tournament"),
   reopen: (phase: Config["phase"]) => adminActions.run("reopen", { phase }),
   importState: (state: TournamentState) => adminActions.run("import_state", state),
+  /** Só no modo local: apaga tudo e recomeça. */
+  resetLocal: () => adminActions.run("reset_local"),
 };
