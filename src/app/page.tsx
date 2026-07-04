@@ -124,7 +124,7 @@ export default function RegulamentoPage() {
         {RULES.map((r) => (
           <section key={r.n} className="panel p-4">
             <div className="mb-2 flex items-center gap-2">
-              <span className="font-display text-2xl text-grass">{r.n}</span>
+              <span className="font-display text-2xl text-gremio">{r.n}</span>
               <h2 className="font-display text-xl tracking-wide text-ink">{r.title}</h2>
             </div>
             <div className="text-sm leading-relaxed text-ink-muted">{r.body}</div>

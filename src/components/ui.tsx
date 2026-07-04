@@ -28,16 +28,16 @@ export function PageHeader({
 export function LiveBadge({ mode, connected }: { mode: DataMode; connected: boolean }) {
   if (mode === "local") {
     return (
-      <span className="chip border-gold/40 text-gold" title="Sem Supabase: estado local neste dispositivo">
-        <span className="h-2 w-2 rounded-full bg-gold" />
+      <span className="chip border-branco/40 text-branco" title="Sem Supabase: estado local neste dispositivo">
+        <span className="h-2 w-2 rounded-full bg-branco" />
         Modo local
       </span>
     );
   }
   return (
-    <span className={`chip ${connected ? "border-grass/40 text-grass" : "text-ink-muted"}`}>
+    <span className={`chip ${connected ? "border-gremio/40 text-gremio" : "text-ink-muted"}`}>
       <span
-        className={`h-2 w-2 rounded-full ${connected ? "animate-pulseGrass bg-grass" : "bg-ink-muted"}`}
+        className={`h-2 w-2 rounded-full ${connected ? "animate-pulseAzul bg-gremio" : "bg-ink-muted"}`}
       />
       {connected ? "Ao vivo" : "Conectando…"}
     </span>

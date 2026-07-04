@@ -8,7 +8,7 @@
 
 html,
 body {
-  background-color: #0a0f1c;
+  background-color: #080d18;
   color: #eef2f8;
 }
 
@@ -16,8 +16,8 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   min-height: 100dvh;
   background-image:
-    radial-gradient(1200px 600px at 50% -10%, rgba(47, 210, 124, 0.06), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(245, 196, 81, 0.05), transparent 55%);
+    radial-gradient(1200px 600px at 50% -10%, rgba(27, 157, 224, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255, 255, 255, 0.04), transparent 55%);
   background-attachment: fixed;
 }
 
@@ -38,7 +38,7 @@ body {
 @layer components {
   .panel {
     @apply rounded-2xl border border-line bg-panel/70 backdrop-blur-sm;
-    background-image: linear-gradient(160deg, #16223c 0%, #111a2e 100%);
+    background-image: linear-gradient(160deg, #14243f 0%, #0e1930 100%);
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-xs font-medium text-ink-muted;
@@ -47,7 +47,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-medium transition-colors;
   }
   .btn-primary {
-    @apply btn border-transparent bg-grass text-base hover:bg-grass/90;
+    @apply btn border-transparent bg-gremio text-base hover:bg-gremio/90;
   }
   .btn-ghost {
     @apply btn bg-white/5 text-ink hover:bg-white/10;
@@ -56,16 +56,16 @@ body {
     @apply btn border-danger/40 bg-danger/10 text-danger hover:bg-danger/20;
   }
   .input {
-    @apply rounded-lg border border-line bg-base/60 px-3 py-2 text-ink outline-none placeholder:text-ink-muted focus:border-grass/60;
+    @apply rounded-lg border border-line bg-base/60 px-3 py-2 text-ink outline-none placeholder:text-ink-muted focus:border-gremio/60;
   }
   .score-input {
-    @apply w-14 rounded-lg border border-line bg-base/60 text-center font-display text-2xl text-ink outline-none focus:border-grass/70;
+    @apply w-14 rounded-lg border border-line bg-base/60 text-center font-display text-2xl text-ink outline-none focus:border-gremio/70;
   }
 }
 
 /* Foco de teclado sempre visível */
 :focus-visible {
-  outline: 2px solid #2fd27c;
+  outline: 2px solid #1b9de0;
   outline-offset: 2px;
   border-radius: 6px;
 }

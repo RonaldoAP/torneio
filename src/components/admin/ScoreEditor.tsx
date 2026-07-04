@@ -85,8 +85,8 @@ export function ScoreEditor({
       </div>
 
       {needsPen && (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-gold/10 px-2 py-1.5">
-          <span className="text-xs text-gold">Empate → pênaltis. Vencedor:</span>
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-branco/10 px-2 py-1.5">
+          <span className="text-xs text-branco">Empate → pênaltis. Vencedor:</span>
           <select
             className="input py-1 text-sm"
             value={pen}
@@ -100,7 +100,7 @@ export function ScoreEditor({
       )}
 
       <div className="mt-2 flex items-center justify-end gap-2">
-        {saved && <span className="text-xs text-grass">salvo ✓</span>}
+        {saved && <span className="text-xs text-gremio">salvo ✓</span>}
         <button className="btn-primary py-1.5 text-sm" onClick={save} disabled={saving || disabled}>
           {saving ? "Salvando…" : "Salvar placar"}
         </button>

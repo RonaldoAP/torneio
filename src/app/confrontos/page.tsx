@@ -64,7 +64,7 @@ export default function ConfrontosPage() {
                       key={g.id}
                       className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border px-3 py-2 ${
                         played
-                          ? "border-grass/25 bg-grass/5"
+                          ? "border-gremio/25 bg-gremio/5"
                           : "border-line bg-base/40"
                       }`}
                     >

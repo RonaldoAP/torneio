@@ -85,7 +85,7 @@ export default function AdminPage() {
           />
           {error && <p className="text-sm text-danger">{error}</p>}
           {!pwSet && (
-            <p className="text-xs text-gold">
+            <p className="text-xs text-branco">
               Aviso: ADMIN_PASSWORD não está definida no servidor.
             </p>
           )}
@@ -201,7 +201,7 @@ function AdminDashboard({
         </p>
       )}
       {error && <p className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
-      {info && <p className="rounded-xl border border-grass/30 bg-grass/10 p-3 text-sm text-grass">{info}</p>}
+      {info && <p className="rounded-xl border border-gremio/30 bg-gremio/10 p-3 text-sm text-gremio">{info}</p>}
 
       {/* Configuração + fases */}
       <section className="panel p-4">

@@ -22,7 +22,7 @@ export function TabBar() {
     <header className="sticky top-0 z-40 border-b border-line bg-base/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-3 py-2 sm:px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-grass/15 font-display text-lg text-grass">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gremio/15 font-display text-lg text-gremio">
             F
           </span>
           <span className="hidden font-display text-xl tracking-wide text-ink sm:block">
@@ -40,7 +40,7 @@ export function TabBar() {
                 href={t.href}
                 className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-grass/15 text-grass"
+                    ? "bg-gremio/15 text-gremio"
                     : "text-ink-muted hover:bg-white/5 hover:text-ink"
                 }`}
               >

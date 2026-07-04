@@ -16,7 +16,7 @@ export default function TvPage() {
     <div className="min-h-dvh px-4 py-6 sm:px-8 sm:py-10">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <div className="font-display text-sm tracking-[0.35em] text-grass">FIFA 26 · AO VIVO</div>
+          <div className="font-display text-sm tracking-[0.35em] text-gremio">FIFA 26 · AO VIVO</div>
           <h1 className="font-display text-5xl leading-none tracking-wide text-ink sm:text-7xl">
             {config.tournament_name}
           </h1>

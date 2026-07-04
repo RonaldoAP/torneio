@@ -29,7 +29,7 @@ export default function GoleadoresPage() {
             <li key={r.playerId} className="panel flex items-center gap-3 p-3 animate-reveal">
               <span
                 className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg font-display text-lg ${
-                  i === 0 ? "bg-gold/20 text-gold" : "bg-white/5 text-ink-muted"
+                  i === 0 ? "bg-branco/20 text-branco" : "bg-white/5 text-ink-muted"
                 }`}
               >
                 {i + 1}
@@ -41,7 +41,7 @@ export default function GoleadoresPage() {
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                   <div
-                    className={`h-full rounded-full ${i === 0 ? "bg-gold" : "bg-grass"}`}
+                    className={`h-full rounded-full ${i === 0 ? "bg-branco" : "bg-gremio"}`}
                     style={{ width: `${max ? (r.goals / max) * 100 : 0}%` }}
                   />
                 </div>

@@ -41,13 +41,13 @@ export function StandingsTable({
               <tr
                 key={r.playerId}
                 className={`border-b border-line/60 transition-colors animate-reveal ${
-                  qualified ? "bg-grass/[0.06]" : ""
+                  qualified ? "bg-gremio/[0.06]" : ""
                 }`}
               >
                 <td className={`${cell} text-center`}>
                   <span
                     className={`inline-grid h-6 w-6 place-items-center rounded-md font-display ${
-                      qualified ? "bg-grass/20 text-grass" : "text-ink-muted"
+                      qualified ? "bg-gremio/20 text-gremio" : "text-ink-muted"
                     } ${big ? "h-9 w-9 text-2xl" : ""}`}
                   >
                     {pos}
@@ -58,7 +58,7 @@ export function StandingsTable({
                     <span className="truncate text-ink">{r.name}</span>
                     {r.unresolvedTie && (
                       <span
-                        className="chip border-gold/50 text-gold"
+                        className="chip border-branco/50 text-branco"
                         title="Empate não resolvido que afeta o Top 8 — decidir em partida de desempate"
                       >
                         empate ⚠
@@ -73,7 +73,7 @@ export function StandingsTable({
                 <td className={numCls}>{r.losses}</td>
                 <td className={`${numCls} hidden sm:table-cell`}>{r.goalsFor}</td>
                 <td className={`${numCls} hidden sm:table-cell`}>{r.goalsAgainst}</td>
-                <td className={`${numCls} ${r.goalDiff > 0 ? "text-grass" : r.goalDiff < 0 ? "text-danger" : ""}`}>
+                <td className={`${numCls} ${r.goalDiff > 0 ? "text-gremio" : r.goalDiff < 0 ? "text-danger" : ""}`}>
                   {r.goalDiff > 0 ? `+${r.goalDiff}` : r.goalDiff}
                 </td>
               </tr>

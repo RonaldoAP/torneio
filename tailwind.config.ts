@@ -8,19 +8,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        base: "#0A0F1C",
+        // Dark tricolor: preto/azul-marinho de fundo, azul celeste e branco do Grêmio.
+        base: "#080D18",
         panel: {
-          DEFAULT: "#111a2e",
-          light: "#16223c",
+          DEFAULT: "#0E1930",
+          light: "#14243F",
         },
-        grass: "#2FD27C",
-        gold: "#F5C451",
+        // azul do Grêmio (celeste) como cor primária
+        gremio: {
+          DEFAULT: "#1B9DE0",
+          dark: "#0A5FA5",
+        },
+        // branco como cor secundária/destaque
+        branco: "#FFFFFF",
         ink: {
           DEFAULT: "#EEF2F8",
-          muted: "#8A97AD",
+          muted: "#8FA3BE",
         },
         danger: "#FF5B62",
-        line: "rgba(255,255,255,0.08)",
+        line: "rgba(255,255,255,0.09)",
       },
       fontFamily: {
         display: ["var(--font-bebas)", "Impact", "sans-serif"],
@@ -35,14 +41,14 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(6px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        pulseGrass: {
-          "0%,100%": { boxShadow: "0 0 0 0 rgba(47,210,124,0.0)" },
-          "50%": { boxShadow: "0 0 0 3px rgba(47,210,124,0.25)" },
+        pulseAzul: {
+          "0%,100%": { boxShadow: "0 0 0 0 rgba(27,157,224,0.0)" },
+          "50%": { boxShadow: "0 0 0 3px rgba(27,157,224,0.30)" },
         },
       },
       animation: {
         reveal: "reveal 0.35s ease-out both",
-        pulseGrass: "pulseGrass 1.6s ease-in-out infinite",
+        pulseAzul: "pulseAzul 1.6s ease-in-out infinite",
       },
     },
   },
