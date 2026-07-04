@@ -297,20 +297,23 @@ function AdminDashboard({
         </ul>
         <div className="mt-3">
           <button
-            className="btn-ghost"
+            className="btn-primary"
             disabled={players.length < 2}
             onClick={() => {
               if (
                 confirm(
-                  "Gerar/regerar a tabela da liga? Isso reinicia todos os placares da liga.",
+                  "Sortear/refazer os confrontos? Isso reinicia todos os placares da liga.",
                 )
               ) {
-                act(() => adminActions.generateLeague(), "Tabela da liga gerada.");
+                act(() => adminActions.generateLeague(), "Confrontos sorteados.");
               }
             }}
           >
-            Gerar / regerar tabela da liga
+            Sortear confrontos (todos contra todos)
           </button>
+          <p className="mt-1 text-xs text-ink-muted">
+            Gera a tabela da liga (turno único). Os 8 primeiros se classificam para o mata-mata.
+          </p>
         </div>
       </section>
 
