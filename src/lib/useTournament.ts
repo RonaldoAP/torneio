@@ -16,7 +16,7 @@ export interface UseTournamentResult extends TournamentState {
 
 const EMPTY_CONFIG: Config = {
   id: 1,
-  tournament_name: "Torneio FIFA 26",
+  tournament_name: "Copa Costela",
   phase: "liga",
   bracket_seeded: false,
 };

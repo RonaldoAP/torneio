@@ -29,8 +29,8 @@ const config: Config = {
         line: "rgba(255,255,255,0.09)",
       },
       fontFamily: {
-        display: ["var(--font-bebas)", "Impact", "sans-serif"],
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-satoshi)", "system-ui", "sans-serif"],
+        sans: ["var(--font-satoshi)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         xl: "0.9rem",

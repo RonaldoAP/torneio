@@ -18,15 +18,23 @@ function uuid(): string {
   return "id-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+// Jogadores já confirmados — semeados no estado inicial para que todos vejam
+// ao abrir o site (modo local). O admin pode adicionar/remover à vontade.
+const SEED_PLAYERS: Player[] = [
+  { id: "seed-ronaldo", name: "Ronaldo", created_at: "2026-01-01T00:00:00.000Z" },
+  { id: "seed-leonardo", name: "Leonardo", created_at: "2026-01-01T00:00:01.000Z" },
+  { id: "seed-allan", name: "Allan", created_at: "2026-01-01T00:00:02.000Z" },
+];
+
 function emptyState(): TournamentState {
   return {
     config: {
       id: 1,
-      tournament_name: "Torneio FIFA 26",
+      tournament_name: "Copa Costela",
       phase: "liga",
       bracket_seeded: false,
     },
-    players: [],
+    players: SEED_PLAYERS.map((p) => ({ ...p })),
     matches: [],
   };
 }
