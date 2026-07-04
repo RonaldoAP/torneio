@@ -12,6 +12,17 @@ export interface RoundRobinResult {
   byes: Record<number, string | null>;
 }
 
+/** Embaralha uma cópia do array (Fisher-Yates). Usado para dar aleatoriedade
+ *  ao sorteio — cada sorteio produz uma tabela diferente. */
+export function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 /**
  * Gera os confrontos da liga (turno único, todos contra todos) usando o
  * método do círculo (circle / round-robin). Se o nº de jogadores for ímpar,
