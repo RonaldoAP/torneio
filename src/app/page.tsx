@@ -112,6 +112,19 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
       </p>
     ),
   },
+  {
+    n: "11",
+    title: "Premiação",
+    body: (
+      <ul className="list-none space-y-1">
+        <li>🥇 <span className="text-branco">1º lugar:</span> Troféu + Medalha de Campeão</li>
+        <li>🥈 <span className="text-branco">2º lugar:</span> Troféu + Medalha de Vice</li>
+        <li>🥉 <span className="text-branco">3º lugar:</span> Troféu</li>
+        <li>🔻 <span className="text-branco">Lanterna (último):</span> Medalha de Lanterna</li>
+        <li>🎖️ <span className="text-branco">Demais participantes:</span> Medalha de participação</li>
+      </ul>
+    ),
+  },
 ];
 
 export default function RegulamentoPage() {

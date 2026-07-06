@@ -6,6 +6,7 @@ import { adminActions } from "@/lib/adminActions";
 import { computeStandings } from "@/lib/standings";
 import type { Match, TournamentState } from "@/lib/types";
 import { ScoreEditor } from "@/components/admin/ScoreEditor";
+import { SITE_LOCKED } from "@/lib/config";
 
 export default function AdminPage() {
   const state = useTournament();
@@ -204,7 +205,16 @@ function AdminDashboard({
       {error && <p className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
       {info && <p className="rounded-xl border border-gremio/30 bg-gremio/10 p-3 text-sm text-gremio">{info}</p>}
 
+      {SITE_LOCKED && (
+        <p className="rounded-xl border border-gremio/30 bg-gremio/10 p-3 text-sm text-ink">
+          🔒 <strong>Fase de divulgação:</strong> por enquanto só é possível gerenciar os
+          participantes. Sorteio, placares, mata-mata e backup estão bloqueados até a abertura do
+          torneio.
+        </p>
+      )}
+
       {/* Configuração + fases */}
+      {!SITE_LOCKED && (
       <section className="panel p-4">
         <h2 className="mb-3 font-display text-xl tracking-wide">Torneio</h2>
         <div className="flex flex-wrap items-end gap-2">
@@ -250,6 +260,7 @@ function AdminDashboard({
           )}
         </div>
       </section>
+      )}
 
       {/* Participantes */}
       <section className="panel p-4">
@@ -296,6 +307,7 @@ function AdminDashboard({
             </li>
           ))}
         </ul>
+        {!SITE_LOCKED && (
         <div className="mt-3">
           <button
             className="btn-primary"
@@ -316,9 +328,11 @@ function AdminDashboard({
             Gera a tabela da liga (turno único). Os 8 primeiros se classificam para o mata-mata.
           </p>
         </div>
+        )}
       </section>
 
       {/* Desistência (W.O.) */}
+      {!SITE_LOCKED && (
       <section className="panel p-4">
         <h2 className="mb-1 font-display text-xl tracking-wide">Desistência (W.O.)</h2>
         <p className="mb-3 text-xs text-ink-muted">
@@ -352,9 +366,10 @@ function AdminDashboard({
           </button>
         </div>
       </section>
+      )}
 
       {/* Placares da liga */}
-      {ligaRounds.length > 0 && (
+      {!SITE_LOCKED && ligaRounds.length > 0 && (
         <section className="panel p-4">
           <h2 className="mb-3 font-display text-xl tracking-wide">Placares — Liga</h2>
           <div className="space-y-4">
@@ -373,6 +388,7 @@ function AdminDashboard({
       )}
 
       {/* Desempate */}
+      {!SITE_LOCKED && (
       <section className="panel p-4">
         <h2 className="mb-1 font-display text-xl tracking-wide">Partida de desempate</h2>
         <p className="mb-3 text-xs text-ink-muted">
@@ -420,9 +436,10 @@ function AdminDashboard({
           </div>
         )}
       </section>
+      )}
 
       {/* Placares do mata-mata */}
-      {koMatches.length > 0 && (
+      {!SITE_LOCKED && koMatches.length > 0 && (
         <section className="panel p-4">
           <h2 className="mb-3 font-display text-xl tracking-wide">Placares — Mata-mata</h2>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -439,6 +456,7 @@ function AdminDashboard({
       )}
 
       {/* Backup */}
+      {!SITE_LOCKED && (
       <section className="panel p-4">
         <h2 className="mb-3 font-display text-xl tracking-wide">Backup do evento (JSON)</h2>
         <div className="flex flex-wrap items-center gap-2">
@@ -477,6 +495,7 @@ function AdminDashboard({
           </p>
         )}
       </section>
+      )}
     </div>
   );
 }
