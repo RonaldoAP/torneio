@@ -100,6 +100,28 @@ async function localAction(action: string, payload: any) {
     case "delete_match":
       state.matches = state.matches.filter((m) => m.id !== payload.id);
       break;
+    case "withdraw": {
+      // Desistência = W.O. 3×0 para todos os adversários (jogos feitos e a fazer).
+      const pid = payload.id as string;
+      for (const m of state.matches) {
+        if (m.stage === "desempate") continue;
+        const isHome = m.home_id === pid;
+        const isAway = m.away_id === pid;
+        if (!isHome && !isAway) continue;
+        if (!m.home_id || !m.away_id) continue;
+        if (isHome) {
+          m.home_goals = 0;
+          m.away_goals = 3;
+        } else {
+          m.home_goals = 3;
+          m.away_goals = 0;
+        }
+        m.pen_winner_id = null;
+        m.counts_for_scorers = false; // gols de W.O. não contam para artilharia
+      }
+      localPropagate(state); // mata-mata: adversário avança
+      break;
+    }
     case "seed_bracket": {
       const standings = computeStandings(state.players, state.matches);
       if (standings.length < 8) throw new Error("São necessários ao menos 8 classificados.");
@@ -155,6 +177,7 @@ export const adminActions = {
   createDesempate: (home_id: string, away_id: string) =>
     adminActions.run("create_desempate", { home_id, away_id }),
   deleteMatch: (id: string) => adminActions.run("delete_match", { id }),
+  withdraw: (id: string) => adminActions.run("withdraw", { id }),
   seedBracket: () => adminActions.run("seed_bracket"),
   closeTournament: () => adminActions.run("close_tournament"),
   reopen: (phase: Config["phase"]) => adminActions.run("reopen", { phase }),

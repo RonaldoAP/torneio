@@ -130,6 +130,7 @@ function AdminDashboard({
   const [tName, setTName] = useState(config.tournament_name);
   const [deA, setDeA] = useState("");
   const [deB, setDeB] = useState("");
+  const [quitId, setQuitId] = useState("");
 
   useEffect(() => setTName(config.tournament_name), [config.tournament_name]);
 
@@ -314,6 +315,41 @@ function AdminDashboard({
           <p className="mt-1 text-xs text-ink-muted">
             Gera a tabela da liga (turno único). Os 8 primeiros se classificam para o mata-mata.
           </p>
+        </div>
+      </section>
+
+      {/* Desistência (W.O.) */}
+      <section className="panel p-4">
+        <h2 className="mb-1 font-display text-xl tracking-wide">Desistência (W.O.)</h2>
+        <p className="mb-3 text-xs text-ink-muted">
+          Se alguém abandonar, todos os jogos dele — feitos ou a fazer — viram vitória por 3×0 para
+          os adversários (todos em igualdade). Os gols de W.O. não contam para a artilharia. No
+          mata-mata, o adversário avança.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <select className="input" value={quitId} onChange={(e) => setQuitId(e.target.value)}>
+            <option value="">Quem desistiu…</option>
+            {players.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            className="btn-danger"
+            disabled={!quitId}
+            onClick={() => {
+              const nm = players.find((p) => p.id === quitId)?.name ?? "";
+              if (
+                confirm(
+                  `Registrar desistência de ${nm}? Todos os jogos dele viram W.O. 3×0 para os adversários.`,
+                )
+              ) {
+                act(() => adminActions.withdraw(quitId), "Desistência registrada (W.O. 3×0).");
+                setQuitId("");
+              }
+            }}
+          >
+            Registrar desistência
+          </button>
         </div>
       </section>
 

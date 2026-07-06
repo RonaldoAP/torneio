@@ -100,6 +100,18 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
       </p>
     ),
   },
+  {
+    n: "10",
+    title: "Desistência / abandono",
+    body: (
+      <p>
+        Se um participante desistir no meio do torneio, todos os jogos dele — já disputados ou não —
+        contam como W.O.: vitória por 3×0 para cada adversário, deixando todos em igualdade. Os gols
+        de W.O. não contam para a artilharia. No mata-mata, a desistência é W.O. e o adversário
+        avança.
+      </p>
+    ),
+  },
 ];
 
 export default function RegulamentoPage() {

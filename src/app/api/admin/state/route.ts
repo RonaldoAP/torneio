@@ -134,6 +134,26 @@ export async function POST(req: Request) {
         break;
       }
 
+      case "withdraw": {
+        // Desistência = W.O. 3×0 para todos os adversários (jogos feitos e a fazer).
+        const pid = payload.id as string;
+        const { data } = await db.from("matches").select("*");
+        const all = (data as Match[]) ?? [];
+        for (const m of all) {
+          if (m.stage === "desempate") continue;
+          const isHome = m.home_id === pid;
+          const isAway = m.away_id === pid;
+          if ((!isHome && !isAway) || !m.home_id || !m.away_id) continue;
+          const goals = isHome ? { home_goals: 0, away_goals: 3 } : { home_goals: 3, away_goals: 0 };
+          await db
+            .from("matches")
+            .update({ ...goals, pen_winner_id: null, counts_for_scorers: false })
+            .eq("id", m.id);
+        }
+        await propagateBracket();
+        break;
+      }
+
       case "seed_bracket": {
         const { players, matches } = await loadState();
         const standings = computeStandings(players, matches);
