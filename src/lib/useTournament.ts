@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Config, Match, Player, TournamentState } from "./types";
 import { getBrowserClient, isSupabaseConfigured } from "./supabase/client";
-import { readLocal, LOCAL_EVENT } from "./localStore";
+import { readLocal, migrateSeed, LOCAL_EVENT } from "./localStore";
 
 export type DataMode = "supabase" | "local";
 
@@ -68,6 +68,7 @@ export function useTournament(): UseTournamentResult {
     mounted.current = true;
 
     if (mode === "local") {
+      migrateSeed(); // atualiza a lista de confirmados em quem já abriu o site
       loadLocal();
       const handler = () => loadLocal();
       window.addEventListener(LOCAL_EVENT, handler);

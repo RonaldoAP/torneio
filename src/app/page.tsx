@@ -2,6 +2,7 @@
 
 import { useTournament } from "@/lib/useTournament";
 import { PageHeader, LiveBadge } from "@/components/ui";
+import { EVENT } from "@/lib/config";
 
 const RULES: { n: string; title: string; body: React.ReactNode }[] = [
   {
@@ -144,6 +145,17 @@ export default function RegulamentoPage() {
           </div>
         }
       />
+
+      {/* Informações do evento */}
+      <div className="panel mb-4 p-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="font-display text-xl tracking-wide text-gremio">📅 {EVENT.date}</span>
+          <span className="font-display text-xl tracking-wide text-ink">🕒 {EVENT.time}</span>
+          <span className="font-display text-xl tracking-wide text-ink">📍 {EVENT.local}</span>
+          <span className="chip">Até {EVENT.slots} participantes</span>
+        </div>
+        <p className="mt-2 text-sm text-ink-muted">⏱️ {EVENT.note}</p>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {RULES.map((r) => (

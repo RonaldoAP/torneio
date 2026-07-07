@@ -22,9 +22,33 @@ function uuid(): string {
 // ao abrir o site (modo local). O admin pode adicionar/remover à vontade.
 const SEED_PLAYERS: Player[] = [
   { id: "seed-ronaldo", name: "Ronaldo", created_at: "2026-01-01T00:00:00.000Z" },
-  { id: "seed-leonardo", name: "Leonardo", created_at: "2026-01-01T00:00:01.000Z" },
-  { id: "seed-allan", name: "Allan", created_at: "2026-01-01T00:00:02.000Z" },
+  { id: "seed-allan", name: "Allan", created_at: "2026-01-01T00:00:01.000Z" },
+  { id: "seed-leo", name: "Léo", created_at: "2026-01-01T00:00:02.000Z" },
+  { id: "seed-riquelme", name: "Riquelme", created_at: "2026-01-01T00:00:03.000Z" },
+  { id: "seed-mosquito", name: "Mosquito", created_at: "2026-01-01T00:00:04.000Z" },
+  { id: "seed-gui", name: "Gui", created_at: "2026-01-01T00:00:05.000Z" },
+  { id: "seed-jhon", name: "Jhon", created_at: "2026-01-01T00:00:06.000Z" },
+  { id: "seed-luis", name: "Luis", created_at: "2026-01-01T00:00:07.000Z" },
+  { id: "seed-vinicius", name: "Vinicius", created_at: "2026-01-01T00:00:08.000Z" },
 ];
+
+// Sobe a versão quando a lista de confirmados muda, para atualizar até quem
+// já abriu o site antes (desde que a liga ainda não tenha começado).
+export const SEED_VERSION = 2;
+const SEED_VERSION_KEY = "torneio_seed_version";
+
+/** Atualiza os confirmados em dispositivos que já têm estado salvo, sem apagar
+ *  um torneio em andamento (só re-semeia se ainda não há partidas). */
+export function migrateSeed() {
+  if (typeof window === "undefined") return;
+  if (window.localStorage.getItem(SEED_VERSION_KEY) === String(SEED_VERSION)) return;
+  const s = readLocal();
+  if (s.matches.length === 0) {
+    s.players = SEED_PLAYERS.map((p) => ({ ...p }));
+    writeLocal(s);
+  }
+  window.localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+}
 
 function emptyState(): TournamentState {
   return {

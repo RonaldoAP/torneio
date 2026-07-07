@@ -4,6 +4,7 @@ import { useTournament } from "@/lib/useTournament";
 import { StandingsTable } from "@/components/StandingsTable";
 import { Bracket } from "@/components/Bracket";
 import { LiveBadge } from "@/components/ui";
+import { EVENT } from "@/lib/config";
 
 export default function TvPage() {
   const { players, matches, config, mode, connected } = useTournament();
@@ -20,6 +21,9 @@ export default function TvPage() {
           <h1 className="font-display text-5xl leading-none tracking-wide text-ink sm:text-7xl">
             {config.tournament_name}
           </h1>
+          <div className="mt-1 font-display text-lg tracking-wide text-ink-muted">
+            📅 {EVENT.date} · 🕒 {EVENT.time} · 📍 {EVENT.local}
+          </div>
         </div>
         <LiveBadge mode={mode} connected={connected} />
       </header>
