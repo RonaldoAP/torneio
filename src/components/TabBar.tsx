@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SITE_LOCKED } from "@/lib/config";
 
 const TABS = [
   { href: "/", label: "Regulamento" },
@@ -29,12 +30,14 @@ export function TabBar() {
             <span className="font-display text-xl tracking-wide text-ink">COPA COSTELA</span>
           </Link>
 
-          <Link
-            href="/admin"
-            className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
-          >
-            Admin
-          </Link>
+          {!SITE_LOCKED && (
+            <Link
+              href="/admin"
+              className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              Admin
+            </Link>
+          )}
         </div>
 
         {/* Abas como toggles: todas visíveis, sem scroll (quebram em linhas). */}
