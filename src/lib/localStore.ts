@@ -30,11 +30,12 @@ const SEED_PLAYERS: Player[] = [
   { id: "seed-jhon", name: "Jhon", created_at: "2026-01-01T00:00:06.000Z" },
   { id: "seed-luis", name: "Luis", created_at: "2026-01-01T00:00:07.000Z" },
   { id: "seed-vinicius", name: "Vinicius", created_at: "2026-01-01T00:00:08.000Z" },
+  { id: "seed-andre", name: "André", created_at: "2026-01-01T00:00:09.000Z" },
 ];
 
 // Sobe a versão quando a lista de confirmados muda, para atualizar até quem
 // já abriu o site antes (desde que a liga ainda não tenha começado).
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 const SEED_VERSION_KEY = "torneio_seed_version";
 
 /** Atualiza os confirmados em dispositivos que já têm estado salvo, sem apagar
