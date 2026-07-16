@@ -14,7 +14,7 @@ export default function MataMataPage() {
     <div className="animate-reveal">
       <PageHeader
         title="Mata-mata"
-        subtitle="Quartas → Semis → Final · jogo único (empate → prorrogação → pênaltis)"
+        subtitle="Repescagem → Semis → Final · 1º e 2º já na semi · jogo único (empate → prorrogação → pênaltis)"
         right={<LiveBadge mode={mode} connected={connected} />}
       />
 
@@ -25,7 +25,7 @@ export default function MataMataPage() {
           <p>O mata-mata ainda não foi montado.</p>
           <p className="mt-1 text-sm">
             {config.phase === "liga"
-              ? "Ele é semeado com o Top 8 quando a liga terminar."
+              ? "Ele é semeado com o Top 6 quando a liga terminar."
               : "Aguardando a montagem do chaveamento pelo admin."}
           </p>
         </EmptyState>

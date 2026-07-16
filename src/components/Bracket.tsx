@@ -136,20 +136,21 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
       )}
 
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Quartas */}
+        {/* Repescagem */}
         <div className="space-y-3">
-          <h3 className="font-display text-lg tracking-wide text-ink-muted">Quartas</h3>
-          <MatchCard match={bySlot("QF1")} players={players} title="QF1 · 1º × 8º" />
-          <MatchCard match={bySlot("QF2")} players={players} title="QF2 · 4º × 5º" />
-          <MatchCard match={bySlot("QF3")} players={players} title="QF3 · 2º × 7º" />
-          <MatchCard match={bySlot("QF4")} players={players} title="QF4 · 3º × 6º" />
+          <h3 className="font-display text-lg tracking-wide text-ink-muted">Repescagem</h3>
+          <MatchCard match={bySlot("REP_A")} players={players} title="4º × 5º" />
+          <MatchCard match={bySlot("REP_B")} players={players} title="3º × 6º" />
+          <p className="px-1 text-xs text-ink-muted">
+            1º e 2º já estão garantidos na semifinal.
+          </p>
         </div>
 
         {/* Semis */}
         <div className="space-y-3 md:pt-9">
           <h3 className="font-display text-lg tracking-wide text-ink-muted">Semifinais</h3>
-          <MatchCard match={bySlot("SF_A")} players={players} title="Semi A · venc. QF1 × venc. QF2" />
-          <MatchCard match={bySlot("SF_B")} players={players} title="Semi B · venc. QF3 × venc. QF4" />
+          <MatchCard match={bySlot("SF_A")} players={players} title="Semi A · 1º × venc. (4º×5º)" />
+          <MatchCard match={bySlot("SF_B")} players={players} title="Semi B · 2º × venc. (3º×6º)" />
         </div>
 
         {/* Final + Terceiro */}

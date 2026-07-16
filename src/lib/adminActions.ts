@@ -124,12 +124,12 @@ async function localAction(action: string, payload: any) {
     }
     case "seed_bracket": {
       const standings = computeStandings(state.players, state.matches);
-      if (standings.length < 8) throw new Error("São necessários ao menos 8 classificados.");
-      const top8 = standings.slice(0, 8).map((r) => r.playerId);
+      if (standings.length < 6) throw new Error("São necessários ao menos 6 classificados.");
+      const top6 = standings.slice(0, 6).map((r) => r.playerId);
       state.matches = state.matches.filter(
         (m) => !["quartas", "semi", "final", "terceiro"].includes(m.stage),
       );
-      for (const seed of seedBracket(top8)) {
+      for (const seed of seedBracket(top6)) {
         state.matches.push(localApi.newMatch(seed));
       }
       state.config = { ...state.config, phase: "mata_mata", bracket_seeded: true };

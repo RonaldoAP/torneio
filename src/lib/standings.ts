@@ -1,6 +1,6 @@
 import type { Match, Player, StandingRow } from "./types";
 
-export const TOP_N = 8; // classificados para o mata-mata
+export const TOP_N = 6; // classificados para o mata-mata (Alternativa B)
 
 interface MutableRow extends StandingRow {
   primaryKey: string;
@@ -151,11 +151,11 @@ export function computeStandings(players: Player[], matches: Match[]): StandingR
       }
 
       if (hasUnresolved) {
-        // Só sinaliza se o empate atravessa a linha do Top 8 (afeta classificação).
+        // Só sinaliza se o empate atravessa a linha do Top 6 (afeta classificação).
         const startPos = i; // 0-based
         const endPos = j - 1;
-        const affectsTop8 = startPos <= TOP_N - 1 && endPos >= TOP_N - 1;
-        for (const g of group) g.unresolvedTie = affectsTop8;
+        const affectsCut = startPos <= TOP_N - 1 && endPos >= TOP_N - 1;
+        for (const g of group) g.unresolvedTie = affectsCut;
       }
 
       for (let k = 0; k < group.length; k++) list[i + k] = group[k];

@@ -10,14 +10,14 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
     title: "Formato",
     body: (
       <ul className="list-disc space-y-1 pl-5">
-        <li>Máximo de 12 vagas (participantes).</li>
         <li>Fase de liga: pontos corridos em turno único — todos contra todos, um jogo cada.</li>
-        <li>Classificam-se os 8 primeiros para a fase final.</li>
-        <li>Mata-mata: quartas, semifinais e final em jogo único.</li>
+        <li>Classificam-se os 6 primeiros para a fase final.</li>
         <li>
-          Chaveamento: 1º×8º, 2º×7º, 3º×6º, 4º×5º. O 1º e o 2º ficam em lados opostos da chave e só
-          podem se enfrentar na final.
+          <span className="text-branco">1º e 2º avançam direto para a semifinal.</span>
         </li>
+        <li>Repescagem: 3º×6º e 4º×5º.</li>
+        <li>Semifinais: 1º × vencedor de (4º×5º) · 2º × vencedor de (3º×6º).</li>
+        <li>Final e disputa de 3º lugar. O 1º e o 2º só podem se enfrentar na final.</li>
       </ul>
     ),
   },
@@ -62,9 +62,10 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
     title: "Mata-mata",
     body: (
       <p>
-        Jogo único em todas as fases; empate no tempo normal → prorrogação; persistindo → pênaltis;
-        quem vencer avança (sem critério de saldo). Há disputa de 3º lugar entre os perdedores das
-        semifinais.
+        Classificam-se 6. O 1º e o 2º entram direto na semifinal; 3º a 6º disputam a repescagem
+        (3º×6º e 4º×5º) por uma vaga na semi. Jogo único em todas as fases; empate no tempo normal →
+        prorrogação; persistindo → pênaltis; quem vencer avança (sem critério de saldo). Há disputa
+        de 3º lugar entre os perdedores das semifinais.
       </p>
     ),
   },

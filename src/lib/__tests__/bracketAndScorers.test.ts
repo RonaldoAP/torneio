@@ -3,7 +3,7 @@ import { seedBracket, recomputeBracket, championAndRunnerUp, thirdPlace } from "
 import { computeScorers } from "../scorers";
 import type { Match, Player } from "../types";
 
-const top8 = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"];
+const top6 = ["s1", "s2", "s3", "s4", "s5", "s6"];
 
 function asMatches(seeds: Array<Partial<Match>>): Match[] {
   return seeds.map((s, i) => ({
@@ -21,44 +21,43 @@ function asMatches(seeds: Array<Partial<Match>>): Match[] {
   }));
 }
 
-describe("seedBracket", () => {
-  it("semeia 1x8, 4x5, 2x7, 3x6", () => {
-    const b = seedBracket(top8);
+describe("seedBracket (Alternativa B — Top 6)", () => {
+  it("semeia repescagem 4x5 e 3x6, com 1º e 2º já na semi", () => {
+    const b = seedBracket(top6);
     const bySlot = Object.fromEntries(b.map((m) => [m.slot, m]));
-    expect([bySlot.QF1.home_id, bySlot.QF1.away_id]).toEqual(["s1", "s8"]);
-    expect([bySlot.QF2.home_id, bySlot.QF2.away_id]).toEqual(["s4", "s5"]);
-    expect([bySlot.QF3.home_id, bySlot.QF3.away_id]).toEqual(["s2", "s7"]);
-    expect([bySlot.QF4.home_id, bySlot.QF4.away_id]).toEqual(["s3", "s6"]);
-    expect(bySlot.SF_A.home_id).toBeNull();
+    expect([bySlot.REP_A.home_id, bySlot.REP_A.away_id]).toEqual(["s4", "s5"]);
+    expect([bySlot.REP_B.home_id, bySlot.REP_B.away_id]).toEqual(["s3", "s6"]);
+    // 1º e 2º já colocados como mandantes das semis; adversário definido depois
+    expect([bySlot.SF_A.home_id, bySlot.SF_A.away_id]).toEqual(["s1", null]);
+    expect([bySlot.SF_B.home_id, bySlot.SF_B.away_id]).toEqual(["s2", null]);
   });
 
-  it("exige exatamente 8 classificados", () => {
+  it("exige exatamente 6 classificados", () => {
     expect(() => seedBracket(["a", "b"])).toThrow();
+    expect(() => seedBracket(["a", "b", "c", "d", "e", "f", "g", "h"])).toThrow();
   });
 });
 
-describe("recomputeBracket", () => {
-  it("propaga vencedores das quartas para as semis", () => {
-    const matches = asMatches(seedBracket(top8));
+describe("recomputeBracket (Alternativa B)", () => {
+  it("leva o vencedor da repescagem para a semi do 1º/2º (sem trocar o mandante)", () => {
+    const matches = asMatches(seedBracket(top6));
     const set = (slot: string, hg: number, ag: number) => {
       const m = matches.find((x) => x.slot === slot)!;
       m.home_goals = hg;
       m.away_goals = ag;
     };
-    set("QF1", 2, 0); // s1
-    set("QF2", 1, 3); // s5
-    set("QF3", 0, 1); // s7
-    set("QF4", 4, 2); // s3
+    set("REP_A", 1, 3); // s5 vence (4º×5º)
+    set("REP_B", 2, 0); // s3 vence (3º×6º)
 
     const updates = recomputeBracket(matches);
     const sfa = updates.find((u) => u.id === matches.find((m) => m.slot === "SF_A")!.id)!;
     const sfb = updates.find((u) => u.id === matches.find((m) => m.slot === "SF_B")!.id)!;
-    expect([sfa.home_id, sfa.away_id]).toEqual(["s1", "s5"]);
-    expect([sfb.home_id, sfb.away_id]).toEqual(["s7", "s3"]);
+    expect([sfa.home_id, sfa.away_id]).toEqual(["s1", "s5"]); // 1º × venc(REP_A)
+    expect([sfb.home_id, sfb.away_id]).toEqual(["s2", "s3"]); // 2º × venc(REP_B)
   });
 
   it("preenche final (vencedores) e terceiro (perdedores) das semis", () => {
-    const matches = asMatches(seedBracket(top8));
+    const matches = asMatches(seedBracket(top6));
     const apply = (updates: ReturnType<typeof recomputeBracket>) => {
       for (const u of updates) {
         const m = matches.find((x) => x.id === u.id)!;
@@ -72,8 +71,9 @@ describe("recomputeBracket", () => {
       m.away_goals = ag;
       if (pen) m.pen_winner_id = pen;
     };
-    set("QF1", 1, 0); set("QF2", 1, 0); set("QF3", 1, 0); set("QF4", 1, 0);
-    apply(recomputeBracket(matches)); // SF_A = s1 x s4, SF_B = s2 x s3
+    set("REP_A", 1, 0); // s4 vence
+    set("REP_B", 1, 0); // s3 vence
+    apply(recomputeBracket(matches)); // SF_A = s1 × s4, SF_B = s2 × s3
     set("SF_A", 2, 1); // s1 vence, s4 perde
     set("SF_B", 0, 0, "s2"); // s2 vence nos pênaltis, s3 perde
     apply(recomputeBracket(matches));

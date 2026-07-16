@@ -11,7 +11,7 @@ export default function ClassificacaoPage() {
     <div className="animate-reveal">
       <PageHeader
         title="Classificação"
-        subtitle="Os 8 primeiros avançam ao mata-mata"
+        subtitle="Os 6 primeiros avançam ao mata-mata"
         right={<LiveBadge mode={mode} connected={connected} />}
       />
 
@@ -27,7 +27,7 @@ export default function ClassificacaoPage() {
           <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span>
               <span className="mr-1 inline-block h-2 w-2 rounded-full bg-gremio align-middle" />
-              Zona de classificação (Top 8)
+              Zona de classificação (Top 6) · 1º e 2º vão direto à semifinal
             </span>
             <span>P pontos · J jogos · V vitórias · E empates · D derrotas</span>
             <span>GP gols marcados · GC gols sofridos · SG saldo</span>

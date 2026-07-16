@@ -1,42 +1,41 @@
 import type { Match, Slot, Stage } from "./types";
 import { matchWinner, matchLoser } from "./standings";
 
-/** Definição da estrutura do chaveamento a partir do Top 8 (seeds 1..8). */
+/** Definição da estrutura do chaveamento a partir do Top 6 (seeds 1..6). */
 export interface SeedPair {
   slot: Slot;
   stage: Stage;
-  // seeds (1-based) para as quartas; null nos slots que se preenchem depois
+  // seeds (1-based); null nos slots que se preenchem depois
   homeSeed: number | null;
   awaySeed: number | null;
 }
 
 /**
- * Semeadura mantendo 1º e 2º em lados opostos (só se cruzam na final):
- *  Chave A: QF1 = 1×8, QF2 = 4×5  -> SF_A
- *  Chave B: QF3 = 2×7, QF4 = 3×6  -> SF_B
- *  FINAL = venc(SF_A) x venc(SF_B)
- *  TERCEIRO = perd(SF_A) x perd(SF_B)
+ * Alternativa B — classificam 6; 1º e 2º vão direto à semifinal.
+ *  Repescagem: REP_A = 4º×5º · REP_B = 3º×6º
+ *  Semifinais: SF_A = 1º × venc(REP_A) · SF_B = 2º × venc(REP_B)
+ *  Final = venc(SF_A) × venc(SF_B)
+ *  3º lugar = perd(SF_A) × perd(SF_B)
+ * O 1º e o 2º só podem se enfrentar na final.
  */
 export const BRACKET_TEMPLATE: SeedPair[] = [
-  { slot: "QF1", stage: "quartas", homeSeed: 1, awaySeed: 8 },
-  { slot: "QF2", stage: "quartas", homeSeed: 4, awaySeed: 5 },
-  { slot: "QF3", stage: "quartas", homeSeed: 2, awaySeed: 7 },
-  { slot: "QF4", stage: "quartas", homeSeed: 3, awaySeed: 6 },
-  { slot: "SF_A", stage: "semi", homeSeed: null, awaySeed: null },
-  { slot: "SF_B", stage: "semi", homeSeed: null, awaySeed: null },
+  { slot: "REP_A", stage: "quartas", homeSeed: 4, awaySeed: 5 },
+  { slot: "REP_B", stage: "quartas", homeSeed: 3, awaySeed: 6 },
+  { slot: "SF_A", stage: "semi", homeSeed: 1, awaySeed: null }, // away = venc(REP_A)
+  { slot: "SF_B", stage: "semi", homeSeed: 2, awaySeed: null }, // away = venc(REP_B)
   { slot: "FINAL", stage: "final", homeSeed: null, awaySeed: null },
   { slot: "TERCEIRO", stage: "terceiro", homeSeed: null, awaySeed: null },
 ];
 
 /**
- * Monta as 8 partidas do mata-mata a partir dos ids do Top 8 (ordenados 1..8).
+ * Monta as 6 partidas do mata-mata a partir dos ids do Top 6 (ordenados 1..6).
  * Retorna objetos prontos para inserir em `matches`.
  */
-export function seedBracket(top8: string[]): Array<Partial<Match>> {
-  if (top8.length !== 8) {
-    throw new Error("São necessários exatamente 8 classificados para montar o mata-mata.");
+export function seedBracket(top6: string[]): Array<Partial<Match>> {
+  if (top6.length !== 6) {
+    throw new Error("São necessários exatamente 6 classificados para montar o mata-mata.");
   }
-  const seedTo = (n: number | null) => (n == null ? null : top8[n - 1]);
+  const seedTo = (n: number | null) => (n == null ? null : top6[n - 1]);
 
   return BRACKET_TEMPLATE.map((t) => ({
     stage: t.stage,
@@ -60,14 +59,11 @@ export interface BracketUpdate {
 }
 
 /**
- * Recalcula os participantes de SF_A/SF_B/FINAL/TERCEIRO a partir dos resultados
- * das rodadas anteriores. Retorna somente os updates necessários.
- *
- * Regras de propagação:
- *   SF_A = venc(QF1) x venc(QF2)
- *   SF_B = venc(QF3) x venc(QF4)
- *   FINAL = venc(SF_A) x venc(SF_B)
- *   TERCEIRO = perd(SF_A) x perd(SF_B)
+ * Recalcula os participantes das fases seguintes a partir dos resultados anteriores.
+ *   SF_A: mantém 1º (home), away = venc(REP_A)
+ *   SF_B: mantém 2º (home), away = venc(REP_B)
+ *   FINAL = venc(SF_A) × venc(SF_B)
+ *   TERCEIRO = perd(SF_A) × perd(SF_B)
  */
 export function recomputeBracket(matches: Match[]): BracketUpdate[] {
   const bySlot = new Map<string, Match>();
@@ -83,8 +79,9 @@ export function recomputeBracket(matches: Match[]): BracketUpdate[] {
   };
 
   const desired: Record<string, { home: string | null; away: string | null }> = {
-    SF_A: { home: winnerOf("QF1"), away: winnerOf("QF2") },
-    SF_B: { home: winnerOf("QF3"), away: winnerOf("QF4") },
+    // 1º e 2º (home) são fixos — só o adversário (venc. da repescagem) muda.
+    SF_A: { home: bySlot.get("SF_A")?.home_id ?? null, away: winnerOf("REP_A") },
+    SF_B: { home: bySlot.get("SF_B")?.home_id ?? null, away: winnerOf("REP_B") },
     FINAL: { home: winnerOf("SF_A"), away: winnerOf("SF_B") },
     TERCEIRO: { home: loserOf("SF_A"), away: loserOf("SF_B") },
   };
@@ -95,7 +92,6 @@ export function recomputeBracket(matches: Match[]): BracketUpdate[] {
     if (!m) continue;
     const want = desired[slot];
     if (m.home_id !== want.home || m.away_id !== want.away) {
-      // Se um participante mudou e já havia placar lançado, o placar é zerado.
       const hadScore = m.home_goals != null || m.away_goals != null || m.pen_winner_id != null;
       updates.push({
         id: m.id,

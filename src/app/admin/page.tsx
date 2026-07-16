@@ -146,7 +146,7 @@ function AdminDashboard({
   }, [matches]);
 
   const koMatches = useMemo(() => {
-    const order = ["QF1", "QF2", "QF3", "QF4", "SF_A", "SF_B", "FINAL", "TERCEIRO"];
+    const order = ["REP_A", "REP_B", "SF_A", "SF_B", "FINAL", "TERCEIRO"];
     return matches
       .filter((m) => ["quartas", "semi", "final", "terceiro"].includes(m.stage))
       .sort((a, b) => order.indexOf(a.slot ?? "") - order.indexOf(b.slot ?? ""));
@@ -232,9 +232,9 @@ function AdminDashboard({
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             className="btn-primary"
-            onClick={() => act(() => adminActions.seedBracket(), "Mata-mata montado com o Top 8.")}
+            onClick={() => act(() => adminActions.seedBracket(), "Mata-mata montado com o Top 6.")}
           >
-            Montar mata-mata (Top 8)
+            Montar mata-mata (Top 6)
           </button>
           <button
             className="btn-ghost"
@@ -325,7 +325,7 @@ function AdminDashboard({
             Sortear confrontos (todos contra todos)
           </button>
           <p className="mt-1 text-xs text-ink-muted">
-            Gera a tabela da liga (turno único). Os 8 primeiros se classificam para o mata-mata.
+            Gera a tabela da liga (turno único). Os 6 primeiros se classificam para o mata-mata.
           </p>
         </div>
         )}

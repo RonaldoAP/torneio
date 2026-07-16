@@ -9,12 +9,10 @@ export type Stage =
 export type Phase = "liga" | "mata_mata" | "encerrado";
 
 export type Slot =
-  | "QF1"
-  | "QF2"
-  | "QF3"
-  | "QF4"
-  | "SF_A"
-  | "SF_B"
+  | "REP_A" // repescagem 4º × 5º
+  | "REP_B" // repescagem 3º × 6º
+  | "SF_A" // 1º × vencedor(REP_A)
+  | "SF_B" // 2º × vencedor(REP_B)
   | "FINAL"
   | "TERCEIRO";
 
@@ -56,7 +54,7 @@ export interface StandingRow {
   goalsAgainst: number; // GC
   goalDiff: number; // SG
   points: number; // P
-  /** true quando este jogador está empatado com outro em critérios que afetam o Top 8 */
+  /** true quando este jogador está empatado com outro em critérios que afetam o Top 6 */
   unresolvedTie?: boolean;
 }
 

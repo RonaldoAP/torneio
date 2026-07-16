@@ -59,7 +59,7 @@ export function StandingsTable({
                     {r.unresolvedTie && (
                       <span
                         className="chip border-branco/50 text-branco"
-                        title="Empate não resolvido que afeta o Top 8 — decidir em partida de desempate"
+                        title="Empate não resolvido que afeta o Top 6 — decidir em partida de desempate"
                       >
                         empate ⚠
                       </span>

@@ -157,19 +157,19 @@ export async function POST(req: Request) {
       case "seed_bracket": {
         const { players, matches } = await loadState();
         const standings = computeStandings(players, matches);
-        if (standings.length < 8) {
+        if (standings.length < 6) {
           return NextResponse.json(
-            { error: "São necessários ao menos 8 jogadores classificados." },
+            { error: "São necessários ao menos 6 jogadores classificados." },
             { status: 400 },
           );
         }
-        const top8 = standings.slice(0, 8).map((r) => r.playerId);
+        const top6 = standings.slice(0, 6).map((r) => r.playerId);
         // Remove partidas de mata-mata anteriores antes de re-semear.
         await db
           .from("matches")
           .delete()
           .in("stage", ["quartas", "semi", "final", "terceiro"]);
-        const bracket = seedBracket(top8);
+        const bracket = seedBracket(top6);
         await db.from("matches").insert(bracket);
         await db.from("config").update({ phase: "mata_mata", bracket_seeded: true }).eq("id", 1);
         break;
