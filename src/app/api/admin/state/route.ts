@@ -45,7 +45,7 @@ async function propagateBracket() {
 }
 
 export async function POST(req: Request) {
-  const denied = requireAdmin();
+  const denied = requireAdmin(req);
   if (denied) return denied;
 
   let body: { action?: string; payload?: any };
@@ -221,8 +221,8 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
-  const denied = requireAdmin();
+export async function GET(req: Request) {
+  const denied = requireAdmin(req);
   if (denied) return denied;
   const state = await loadState();
   return NextResponse.json({ ok: true, state });

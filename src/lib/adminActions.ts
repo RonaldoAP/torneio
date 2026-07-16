@@ -7,10 +7,16 @@ import { generateRoundRobin, shuffle } from "./roundRobin";
 import { computeStandings } from "./standings";
 import { seedBracket, recomputeBracket } from "./bracket";
 
+// Slug secreto do admin — enviado em cada gravação (o servidor autoriza por ele).
+let adminSlug = "";
+export function setAdminSlug(s: string) {
+  adminSlug = s;
+}
+
 async function callServer(action: string, payload?: any) {
   const res = await fetch("/api/admin/state", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-admin-slug": adminSlug },
     body: JSON.stringify({ action, payload }),
   });
   const data = await res.json().catch(() => ({}));

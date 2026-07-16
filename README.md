@@ -8,7 +8,7 @@ a página.
 - **Stack:** Next.js 14 (App Router) · TypeScript · Tailwind CSS
 - **Tempo real:** Supabase (Postgres + Realtime)
 - **Deploy:** Vercel
-- Leitura **pública**; escrita (placares) só no **/admin** protegido por senha.
+- Leitura **pública**; escrita (placares) só no painel de admin numa **URL secreta** (`/painel/<ADMIN_SLUG>`, sem senha).
 
 > Sem Supabase configurado, o app cai automaticamente num **modo local** (estado em
 > `localStorage`, um dispositivo só) — ótimo para testar. O modo **padrão** é o Supabase.
@@ -48,13 +48,13 @@ npm test
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key
 SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
-ADMIN_PASSWORD=uma-senha-forte
+ADMIN_SLUG=uma-slug-secreta-longa
 ```
 
 ### Como a segurança funciona
 
 - O **browser** usa só a `anon key` e, pelo RLS, **só consegue ler**.
-- As gravações passam pelas rotas `/api/admin/*` (servidor), que exigem a `ADMIN_PASSWORD`
+- As gravações passam pelas rotas `/api/admin/*` (servidor), que exigem o slug secreto `ADMIN_SLUG`
   e usam a `service_role key` (que ignora o RLS). **Essa chave nunca vai para o browser.**
 
 > Teste o tempo real: abra o site em duas abas/aparelhos, lance um placar no `/admin` e veja a
@@ -69,7 +69,7 @@ ADMIN_PASSWORD=uma-senha-forte
 3. Framework: **Next.js** (detectado automaticamente).
 4. Em **Environment Variables**, adicione as quatro variáveis do `.env.local`:
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-   `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`.
+   `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_SLUG`.
 5. **Deploy.** Pronto.
 
 Ou pela CLI:
@@ -87,7 +87,7 @@ Lembre de cadastrar as variáveis de ambiente também no painel da Vercel
 
 ## 4. Como usar o torneio (fluxo do admin)
 
-Acesse **`/admin`** e entre com a `ADMIN_PASSWORD`.
+Acesse **`/painel/<ADMIN_SLUG>`** (a URL secreta que só você sabe — sem senha).
 
 1. **Defina o nome** do torneio.
 2. **Cadastre os participantes** aos poucos (máx. 12), conforme confirmam presença.
@@ -120,7 +120,7 @@ só definem quem fica na frente.
 | `/mata-mata`    | Chaveamento (Quartas → Semis → Final) + 3º lugar + banner de campeão   |
 | `/goleadores`   | Artilharia por participante                                            |
 | `/tv`           | Modo TV/Projetor (fonte grande, tela cheia, tempo real)               |
-| `/admin`        | Painel protegido por senha                                            |
+| `/painel/<slug>` | Painel de admin em URL secreta (sem senha)                          |
 
 ---
 

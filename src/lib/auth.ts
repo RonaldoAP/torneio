@@ -1,25 +1,24 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-export const ADMIN_COOKIE = "torneio_admin";
-
-/** Token derivado da senha — o cookie guarda isto, não a senha em claro. */
-export function adminToken(): string {
-  const pwd = process.env.ADMIN_PASSWORD ?? "";
-  // token simples e determinístico (base64 da senha). httpOnly no cookie.
-  return Buffer.from(`torneio:${pwd}`).toString("base64");
+/** Slug secreto do admin (definido em ADMIN_SLUG no servidor). */
+export function getAdminSlug(): string {
+  return process.env.ADMIN_SLUG ?? "";
 }
 
-export function isAdminRequest(): boolean {
-  const pwd = process.env.ADMIN_PASSWORD;
-  if (!pwd) return false;
-  const cookie = cookies().get(ADMIN_COOKIE)?.value;
-  return Boolean(cookie) && cookie === adminToken();
+export function adminSlugConfigured(): boolean {
+  return getAdminSlug().length > 0;
 }
 
-/** Envolve um handler de rota exigindo autenticação de admin. */
-export function requireAdmin(): NextResponse | null {
-  if (!isAdminRequest()) {
+/** Confere se o slug informado bate com o secreto do servidor. */
+export function isValidAdminSlug(slug: string | null | undefined): boolean {
+  const secret = getAdminSlug();
+  return secret.length > 0 && slug === secret;
+}
+
+/** Bloqueia rotas de gravação sem o slug secreto (enviado no header x-admin-slug). */
+export function requireAdmin(req: Request): NextResponse | null {
+  const slug = req.headers.get("x-admin-slug");
+  if (!isValidAdminSlug(slug)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   return null;
