@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 import { useTournament } from "@/lib/useTournament";
-import { PageHeader, LiveBadge, EmptyState, Loading, useNameMap } from "@/components/ui";
-import type { Match } from "@/lib/types";
+import { PageHeader, LiveBadge, EmptyState, Loading, Avatar } from "@/components/ui";
+import type { Match, Player } from "@/lib/types";
 
 export default function ConfrontosPage() {
   const { players, matches, mode, connected, loading } = useTournament();
-  const name = useNameMap(players);
+  const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
   const rounds = useMemo(() => {
     const liga = matches.filter((m) => m.stage === "liga");
@@ -17,9 +17,7 @@ export default function ConfrontosPage() {
       if (!byRound.has(r)) byRound.set(r, []);
       byRound.get(r)!.push(m);
     }
-    return [...byRound.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([round, games]) => ({ round, games }));
+    return [...byRound.entries()].sort((a, b) => a[0] - b[0]).map(([round, games]) => ({ round, games }));
   }, [matches]);
 
   const hasGames = rounds.length > 0;
@@ -40,55 +38,65 @@ export default function ConfrontosPage() {
           <p className="mt-1 text-sm">O admin realiza o sorteio dos jogos no painel.</p>
         </EmptyState>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {rounds.map(({ round, games }) => (
-            <section key={round} className="panel p-3 sm:p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-xl tracking-wide text-ink">Rodada {round}</h2>
+            <section key={round}>
+              <h2 className="mb-2 flex items-center gap-2 px-1 font-display text-sm uppercase tracking-[0.15em] text-ink-muted">
+                <span className="text-cyan">{round}ª</span> Rodada
+              </h2>
+              <div className="panel divide-y divide-line/60">
+                {games.map((g) => (
+                  <MatchRow key={g.id} game={g} byId={byId} />
+                ))}
               </div>
-              <ul className="grid gap-2">
-                {games.map((g) => {
-                  const played = g.home_goals != null && g.away_goals != null;
-                  const homeWin = played && (g.home_goals as number) > (g.away_goals as number);
-                  const awayWin = played && (g.away_goals as number) > (g.home_goals as number);
-
-                  const win = "text-emerald-400 font-semibold";
-                  const lose = "text-danger";
-                  const homeCls = homeWin ? win : awayWin ? lose : "text-ink";
-                  const awayCls = awayWin ? win : homeWin ? lose : "text-ink";
-
-                  return (
-                    <li
-                      key={g.id}
-                      className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-xl border px-3 py-2 ${
-                        played ? "border-line bg-white/[0.03]" : "border-line bg-base/40"
-                      }`}
-                    >
-                      <span className={`truncate text-right ${played ? homeCls : "text-ink"}`}>
-                        {name(g.home_id)}
-                      </span>
-                      <span className="min-w-[74px] text-center">
-                        {played ? (
-                          <span className="font-display text-2xl leading-none">
-                            <span className={homeCls}>{g.home_goals}</span>
-                            <span className="text-ink-muted"> × </span>
-                            <span className={awayCls}>{g.away_goals}</span>
-                          </span>
-                        ) : (
-                          <span className="font-display text-xl leading-none text-ink-muted">VS</span>
-                        )}
-                      </span>
-                      <span className={`truncate text-left ${played ? awayCls : "text-ink"}`}>
-                        {name(g.away_id)}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
             </section>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function MatchRow({ game, byId }: { game: Match; byId: Map<string, Player> }) {
+  const home = game.home_id ? byId.get(game.home_id) : undefined;
+  const away = game.away_id ? byId.get(game.away_id) : undefined;
+  const played = game.home_goals != null && game.away_goals != null;
+  const homeWin = played && (game.home_goals as number) > (game.away_goals as number);
+  const awayWin = played && (game.away_goals as number) > (game.home_goals as number);
+
+  const nameCls = (win: boolean, lose: boolean) =>
+    `truncate font-semibold ${win ? "text-emerald-400" : lose ? "text-danger" : "text-ink"}`;
+  const scoreCls = (win: boolean, lose: boolean) =>
+    win ? "text-emerald-400" : lose ? "text-danger" : "text-white";
+
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2.5 sm:gap-4">
+      {/* mandante: nome + foto */}
+      <div className="flex min-w-0 items-center justify-end gap-2.5">
+        <span className={nameCls(homeWin, awayWin)}>{home?.name ?? "—"}</span>
+        <Avatar name={home?.name ?? "?"} photo={home?.photo} size={36} />
+      </div>
+
+      {/* placar */}
+      <div className="min-w-[68px] text-center">
+        {played ? (
+          <span className="font-display text-2xl leading-none tracking-tight">
+            <span className={scoreCls(homeWin, awayWin)}>{game.home_goals}</span>
+            <span className="mx-1 text-ink-muted/60">×</span>
+            <span className={scoreCls(awayWin, homeWin)}>{game.away_goals}</span>
+          </span>
+        ) : (
+          <span className="rounded-md border border-line px-2 py-0.5 font-display text-xs tracking-widest text-ink-muted">
+            VS
+          </span>
+        )}
+      </div>
+
+      {/* visitante: foto + nome */}
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar name={away?.name ?? "?"} photo={away?.photo} size={36} />
+        <span className={nameCls(awayWin, homeWin)}>{away?.name ?? "—"}</span>
+      </div>
     </div>
   );
 }

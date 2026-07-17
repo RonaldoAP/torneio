@@ -8,29 +8,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dark tricolor: preto/azul-marinho de fundo, azul celeste e branco do Grêmio.
-        base: "#080D18",
+        // Estilo Champions League: azul-marinho profundo, azul elétrico e ciano.
+        base: "#050A2C",
         panel: {
-          DEFAULT: "#0E1930",
-          light: "#14243F",
+          DEFAULT: "#0A1145",
+          light: "#0E185C",
         },
-        // azul do Grêmio (celeste) como cor primária
+        // token 'gremio' mantido por compatibilidade = azul elétrico da Champions
         gremio: {
-          DEFAULT: "#1B9DE0",
-          dark: "#0A5FA5",
+          DEFAULT: "#3B5BFF",
+          dark: "#1E2E8C",
         },
-        // branco como cor secundária/destaque
+        cyan: "#25E4FF", // ciano de destaque (zona de classificação)
         branco: "#FFFFFF",
         ink: {
-          DEFAULT: "#EEF2F8",
-          muted: "#8FA3BE",
+          DEFAULT: "#EAF0FF",
+          muted: "#8FA0D0",
         },
         danger: "#FF5B62",
-        line: "rgba(255,255,255,0.09)",
+        line: "rgba(255,255,255,0.10)",
       },
       fontFamily: {
-        display: ["var(--font-satoshi)", "system-ui", "sans-serif"],
-        sans: ["var(--font-satoshi)", "system-ui", "sans-serif"],
+        display: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         xl: "0.9rem",
@@ -42,8 +42,8 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         pulseAzul: {
-          "0%,100%": { boxShadow: "0 0 0 0 rgba(27,157,224,0.0)" },
-          "50%": { boxShadow: "0 0 0 3px rgba(27,157,224,0.30)" },
+          "0%,100%": { boxShadow: "0 0 0 0 rgba(59,91,255,0.0)" },
+          "50%": { boxShadow: "0 0 0 3px rgba(37,228,255,0.35)" },
         },
       },
       animation: {

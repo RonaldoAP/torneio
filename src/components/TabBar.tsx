@@ -42,7 +42,7 @@ export function TabBar() {
                 aria-current={active ? "page" : undefined}
                 className={`grow basis-24 rounded-lg border px-3 py-2 text-center text-sm font-medium transition-colors ${
                   active
-                    ? "border-transparent bg-gremio text-base shadow-[0_0_20px_rgba(27,157,224,0.25)]"
+                    ? "border-transparent bg-gremio text-white shadow-[0_0_22px_rgba(59,91,255,0.45)]"
                     : "border-line bg-white/5 text-ink-muted hover:bg-white/10 hover:text-ink"
                 }`}
               >

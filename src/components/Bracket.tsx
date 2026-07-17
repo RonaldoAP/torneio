@@ -120,7 +120,7 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
       {championId && (
         <div
           className="panel p-5 text-center animate-reveal"
-          style={{ borderColor: "rgba(27,157,224,0.5)", boxShadow: "0 0 40px rgba(27,157,224,0.15)" }}
+          style={{ borderColor: "rgba(37,228,255,0.55)", boxShadow: "0 0 44px rgba(59,91,255,0.28)" }}
         >
           <div className="font-display text-sm tracking-[0.3em] text-gremio">CAMPEÃO</div>
           <div className="mt-1 font-display text-4xl text-branco sm:text-5xl">🏆 {name(championId)}</div>

@@ -20,6 +20,27 @@ export function matchLoser(m: Match): string | null {
   return w === m.home_id ? m.away_id : m.home_id;
 }
 
+export type Result = "V" | "E" | "D";
+
+/** Últimos N resultados do jogador na liga, em ordem cronológica (rodada). */
+export function recentResults(playerId: string, matches: Match[], n = 5): Result[] {
+  const liga = matches
+    .filter(
+      (m) =>
+        m.stage === "liga" &&
+        m.home_goals != null &&
+        m.away_goals != null &&
+        (m.home_id === playerId || m.away_id === playerId),
+    )
+    .sort((a, b) => (a.round ?? 0) - (b.round ?? 0));
+  const res: Result[] = liga.map((m) => {
+    const gf = (m.home_id === playerId ? m.home_goals : m.away_goals) as number;
+    const ga = (m.home_id === playerId ? m.away_goals : m.home_goals) as number;
+    return gf > ga ? "V" : gf < ga ? "D" : "E";
+  });
+  return res.slice(-n);
+}
+
 /** Head-to-head / desempate entre dois jogadores.
  *  Retorna <0 se `a` fica na frente, >0 se `b` fica na frente, 0 se não resolvido. */
 function pairwise(aId: string, bId: string, matches: Match[]): number {
