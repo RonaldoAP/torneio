@@ -70,7 +70,7 @@ function MatchRow({ game, byId }: { game: Match; byId: Map<string, Player> }) {
     win ? "text-emerald-400" : lose ? "text-danger" : "text-white";
 
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2.5 sm:gap-4">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-4 sm:gap-4 sm:py-5">
       {/* mandante: nome + foto */}
       <div className="flex min-w-0 items-center justify-end gap-2.5">
         <span className={nameCls(homeWin, awayWin)}>{home?.name ?? "—"}</span>

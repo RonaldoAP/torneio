@@ -26,7 +26,7 @@ const config: Config = {
           muted: "#8FA0D0",
         },
         danger: "#FF5B62",
-        line: "rgba(255,255,255,0.10)",
+        line: "rgba(255,255,255,0.06)",
       },
       fontFamily: {
         display: ["var(--font-manrope)", "system-ui", "sans-serif"],

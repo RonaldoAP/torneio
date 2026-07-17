@@ -34,8 +34,8 @@ export function StandingsTable({
 }) {
   const rows = computeStandings(players, matches);
   const photoById = new Map(players.map((p) => [p.id, p.photo] as const));
-  const num = "px-2 py-2 text-center tabular";
-  const th = "px-2 py-2 text-center font-semibold uppercase tracking-wide text-[11px] text-ink-muted";
+  const num = "px-2 py-3.5 text-center tabular";
+  const th = "px-2 py-3 text-center font-semibold uppercase tracking-wide text-[11px] text-ink-muted";
 
   return (
     <div className="panel overflow-x-auto">
@@ -68,7 +68,7 @@ export function StandingsTable({
                   qualified ? "bg-cyan/[0.05]" : ""
                 }`}
               >
-                <td className="py-2 pl-0 text-center">
+                <td className="py-3.5 pl-0 text-center">
                   <span className="flex items-center">
                     <span
                       className={`h-8 w-1 rounded-r ${qualified ? "bg-cyan" : "bg-transparent"} ${big ? "h-11" : ""}`}
@@ -82,7 +82,7 @@ export function StandingsTable({
                     </span>
                   </span>
                 </td>
-                <td className="px-2 py-2 text-left">
+                <td className="px-2 py-3.5 text-left">
                   <span className="flex items-center gap-2.5">
                     <Avatar name={r.name} photo={photoById.get(r.playerId)} size={big ? 40 : 30} />
                     <span className="truncate font-semibold text-ink">{r.name}</span>
@@ -107,7 +107,7 @@ export function StandingsTable({
                   {r.goalDiff > 0 ? `+${r.goalDiff}` : r.goalDiff}
                 </td>
                 <td className={`${num} hidden text-ink-muted sm:table-cell`}>{aprov}%</td>
-                <td className="hidden px-3 py-2 text-center md:table-cell">
+                <td className="hidden px-3 py-3.5 text-center md:table-cell">
                   <FormDots results={recentResults(r.playerId, matches)} />
                 </td>
               </tr>
