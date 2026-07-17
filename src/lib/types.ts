@@ -20,6 +20,7 @@ export interface Player {
   id: string;
   name: string;
   created_at: string;
+  photo?: string | null; // foto de perfil (data URI ou URL) — opcional
 }
 
 export interface Match {

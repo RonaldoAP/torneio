@@ -32,6 +32,9 @@ create table if not exists players (
   created_at timestamptz not null default now()
 );
 
+-- foto de perfil (data URI base64 ou URL) — idempotente para bancos já criados
+alter table players add column if not exists photo text;
+
 create table if not exists matches (
   id                uuid primary key default gen_random_uuid(),
   stage             match_stage not null default 'liga',

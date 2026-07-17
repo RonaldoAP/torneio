@@ -1,7 +1,7 @@
 "use client";
 
 import { useTournament } from "@/lib/useTournament";
-import { PageHeader, LiveBadge, EmptyState, Loading } from "@/components/ui";
+import { PageHeader, LiveBadge, EmptyState, Loading, Avatar } from "@/components/ui";
 
 export default function ParticipantesPage() {
   const { players, mode, connected, loading } = useTournament();
@@ -25,9 +25,10 @@ export default function ParticipantesPage() {
         <ol className="grid gap-2 sm:grid-cols-2">
           {players.map((p, i) => (
             <li key={p.id} className="panel flex items-center gap-3 p-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/5 font-display text-lg text-ink-muted">
+              <span className="w-5 shrink-0 text-center font-display text-lg text-ink-muted">
                 {i + 1}
               </span>
+              <Avatar name={p.name} photo={p.photo} size={44} />
               <span className="truncate text-lg text-ink">{p.name}</span>
             </li>
           ))}

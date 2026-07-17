@@ -81,6 +81,11 @@ export async function POST(req: Request) {
         break;
       }
 
+      case "set_photo": {
+        await db.from("players").update({ photo: payload.photo ?? null }).eq("id", payload.id);
+        break;
+      }
+
       case "generate_league": {
         // Regerar reinicia a liga: apaga partidas de liga e desempate.
         await db.from("matches").delete().in("stage", ["liga", "desempate"]);

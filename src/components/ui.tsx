@@ -44,6 +44,44 @@ export function LiveBadge({ mode, connected }: { mode: DataMode; connected: bool
   );
 }
 
+export function Avatar({
+  name,
+  photo,
+  size = 40,
+}: {
+  name: string;
+  photo?: string | null;
+  size?: number;
+}) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const dim = { width: size, height: size };
+  if (photo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={photo}
+        alt={name}
+        style={dim}
+        className="shrink-0 rounded-full border border-line object-cover"
+      />
+    );
+  }
+  return (
+    <span
+      style={dim}
+      className="grid shrink-0 place-items-center rounded-full border border-line bg-white/5 font-display text-ink-muted"
+    >
+      {initials}
+    </span>
+  );
+}
+
 export function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <div className="panel grid place-items-center px-6 py-14 text-center text-ink-muted">

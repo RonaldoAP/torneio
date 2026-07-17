@@ -57,6 +57,11 @@ async function localAction(action: string, payload: any) {
     case "remove_player":
       localApi.removePlayer(payload.id);
       return;
+    case "set_photo": {
+      const p = state.players.find((x) => x.id === payload.id);
+      if (p) p.photo = payload.photo ?? null;
+      break;
+    }
     case "generate_league": {
       state.matches = state.matches.filter(
         (m) => m.stage !== "liga" && m.stage !== "desempate",
@@ -173,6 +178,7 @@ export const adminActions = {
   setConfig: (patch: Partial<Config>) => adminActions.run("set_config", patch),
   addPlayer: (name: string) => adminActions.run("add_player", { name }),
   removePlayer: (id: string) => adminActions.run("remove_player", { id }),
+  setPhoto: (id: string, photo: string | null) => adminActions.run("set_photo", { id, photo }),
   generateLeague: () => adminActions.run("generate_league"),
   saveScore: (p: {
     id: string;

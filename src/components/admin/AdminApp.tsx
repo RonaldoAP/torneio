@@ -6,6 +6,8 @@ import { adminActions, setAdminSlug } from "@/lib/adminActions";
 import { computeStandings } from "@/lib/standings";
 import type { Match, TournamentState } from "@/lib/types";
 import { ScoreEditor } from "@/components/admin/ScoreEditor";
+import { Avatar } from "@/components/ui";
+import { fileToAvatarDataUrl } from "@/lib/image";
 
 /**
  * Painel de administração. O acesso é protegido pela URL secreta (slug) —
@@ -187,11 +189,38 @@ export function AdminApp({ slug }: { slug?: string }) {
         </div>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {players.map((p, i) => (
-            <li key={p.id} className="flex items-center justify-between rounded-lg border border-line bg-base/40 px-3 py-2">
-              <span className="truncate">
-                <span className="mr-2 text-ink-muted">{i + 1}.</span>
-                {p.name}
-              </span>
+            <li key={p.id} className="flex items-center gap-3 rounded-lg border border-line bg-base/40 px-3 py-2">
+              <span className="w-4 shrink-0 text-center text-ink-muted">{i + 1}</span>
+              <Avatar name={p.name} photo={p.photo} size={40} />
+              <span className="min-w-0 flex-1 truncate">{p.name}</span>
+              <label className="btn-ghost cursor-pointer px-2 py-1 text-xs" title="Enviar/trocar foto">
+                {p.photo ? "Trocar foto" : "Foto"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    try {
+                      const data = await fileToAvatarDataUrl(f);
+                      await act(() => adminActions.setPhoto(p.id, data), `Foto de ${p.name} salva.`);
+                    } catch (err: any) {
+                      setError(err?.message ?? "Falha ao enviar a foto.");
+                    }
+                  }}
+                />
+              </label>
+              {p.photo && (
+                <button
+                  className="text-xs text-ink-muted hover:text-danger"
+                  title="Remover foto"
+                  onClick={() => act(() => adminActions.setPhoto(p.id, null))}
+                >
+                  ✕
+                </button>
+              )}
               <button
                 className="btn-danger px-2 py-1 text-xs"
                 onClick={() => act(() => adminActions.removePlayer(p.id))}
