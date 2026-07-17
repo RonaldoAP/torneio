@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import { useTournament } from "@/lib/useTournament";
-import { PageHeader, LiveBadge, EmptyState, Loading, Avatar } from "@/components/ui";
+import { PageHeader, LiveBadge, EmptyState, Loading } from "@/components/ui";
+import { MatchRow } from "@/components/MatchRow";
 import type { Match, Player } from "@/lib/types";
 
 export default function ConfrontosPage() {
@@ -46,57 +47,20 @@ export default function ConfrontosPage() {
               </h2>
               <div className="panel divide-y divide-line/60">
                 {games.map((g) => (
-                  <MatchRow key={g.id} game={g} byId={byId} />
+                  <MatchRow
+                    key={g.id}
+                    home={g.home_id ? byId.get(g.home_id) : undefined}
+                    away={g.away_id ? byId.get(g.away_id) : undefined}
+                    homeGoals={g.home_goals}
+                    awayGoals={g.away_goals}
+                    penWinnerId={g.pen_winner_id}
+                  />
                 ))}
               </div>
             </section>
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function MatchRow({ game, byId }: { game: Match; byId: Map<string, Player> }) {
-  const home = game.home_id ? byId.get(game.home_id) : undefined;
-  const away = game.away_id ? byId.get(game.away_id) : undefined;
-  const played = game.home_goals != null && game.away_goals != null;
-  const homeWin = played && (game.home_goals as number) > (game.away_goals as number);
-  const awayWin = played && (game.away_goals as number) > (game.home_goals as number);
-
-  const nameCls = (win: boolean, lose: boolean) =>
-    `truncate font-semibold ${win ? "text-emerald-400" : lose ? "text-danger" : "text-ink"}`;
-  const scoreCls = (win: boolean, lose: boolean) =>
-    win ? "text-emerald-400" : lose ? "text-danger" : "text-white";
-
-  return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-4 sm:gap-4 sm:py-5">
-      {/* mandante: nome + foto */}
-      <div className="flex min-w-0 items-center justify-end gap-2.5">
-        <span className={nameCls(homeWin, awayWin)}>{home?.name ?? "—"}</span>
-        <Avatar name={home?.name ?? "?"} photo={home?.photo} size={36} />
-      </div>
-
-      {/* placar */}
-      <div className="min-w-[68px] text-center">
-        {played ? (
-          <span className="font-display text-2xl leading-none tracking-tight">
-            <span className={scoreCls(homeWin, awayWin)}>{game.home_goals}</span>
-            <span className="mx-1 text-ink-muted/60">×</span>
-            <span className={scoreCls(awayWin, homeWin)}>{game.away_goals}</span>
-          </span>
-        ) : (
-          <span className="rounded-md border border-line px-2 py-0.5 font-display text-xs tracking-widest text-ink-muted">
-            VS
-          </span>
-        )}
-      </div>
-
-      {/* visitante: foto + nome */}
-      <div className="flex min-w-0 items-center gap-2.5">
-        <Avatar name={away?.name ?? "?"} photo={away?.photo} size={36} />
-        <span className={nameCls(awayWin, homeWin)}>{away?.name ?? "—"}</span>
-      </div>
     </div>
   );
 }

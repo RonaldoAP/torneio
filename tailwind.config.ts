@@ -45,10 +45,15 @@ const config: Config = {
           "0%,100%": { boxShadow: "0 0 0 0 rgba(59,91,255,0.0)" },
           "50%": { boxShadow: "0 0 0 3px rgba(37,228,255,0.35)" },
         },
+        floatY: {
+          "0%,100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-7px)" },
+        },
       },
       animation: {
         reveal: "reveal 0.35s ease-out both",
         pulseAzul: "pulseAzul 1.6s ease-in-out infinite",
+        floatY: "floatY 3.4s ease-in-out infinite",
       },
     },
   },
