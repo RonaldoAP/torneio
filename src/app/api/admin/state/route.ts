@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { generateRoundRobin, shuffle } from "@/lib/roundRobin";
+import { generateBalancedLeague } from "@/lib/drawConstraints";
 import { computeStandings } from "@/lib/standings";
 import { seedBracket, recomputeBracket } from "@/lib/bracket";
 import type { Match, Player, TournamentState } from "@/lib/types";
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         // Regerar reinicia a liga: apaga partidas de liga e desempate.
         await db.from("matches").delete().in("stage", ["liga", "desempate"]);
         const { players } = await loadState();
-        const { games } = generateRoundRobin(shuffle(players));
+        const { games } = generateBalancedLeague(players);
         if (games.length > 0) {
           const rows = games.map((g) => ({
             stage: "liga" as const,

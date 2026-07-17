@@ -3,7 +3,7 @@
 import type { Config, Match, Player, TournamentState } from "./types";
 import { isSupabaseConfigured } from "./supabase/client";
 import { readLocal, writeLocal, resetLocal, localApi } from "./localStore";
-import { generateRoundRobin, shuffle } from "./roundRobin";
+import { generateBalancedLeague } from "./drawConstraints";
 import { computeStandings } from "./standings";
 import { seedBracket, recomputeBracket } from "./bracket";
 
@@ -61,7 +61,7 @@ async function localAction(action: string, payload: any) {
       state.matches = state.matches.filter(
         (m) => m.stage !== "liga" && m.stage !== "desempate",
       );
-      const { games } = generateRoundRobin(shuffle(state.players));
+      const { games } = generateBalancedLeague(state.players);
       for (const g of games) {
         state.matches.push(
           localApi.newMatch({
