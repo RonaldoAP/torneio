@@ -123,11 +123,14 @@ export async function POST(req: Request) {
 
       case "save_score": {
         const { id, home_goals, away_goals, pen_winner_id } = payload;
+        // Gols nunca negativos (min=0) e sempre inteiros.
+        const clampGoal = (v: unknown) =>
+          v === "" || v == null ? null : Math.max(0, Math.floor(Number(v) || 0));
         await db
           .from("matches")
           .update({
-            home_goals: home_goals === "" || home_goals == null ? null : Number(home_goals),
-            away_goals: away_goals === "" || away_goals == null ? null : Number(away_goals),
+            home_goals: clampGoal(home_goals),
+            away_goals: clampGoal(away_goals),
             pen_winner_id: pen_winner_id || null,
           })
           .eq("id", id);
@@ -181,6 +184,15 @@ export async function POST(req: Request) {
         if (standings.length < 6) {
           return NextResponse.json(
             { error: "São necessários ao menos 6 jogadores classificados." },
+            { status: 400 },
+          );
+        }
+        if (standings.some((r) => r.unresolvedTie)) {
+          return NextResponse.json(
+            {
+              error:
+                "Há empate no corte do Top 6. Crie e resolva a partida de desempate antes de montar o mata-mata.",
+            },
             { status: 400 },
           );
         }

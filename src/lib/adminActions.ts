@@ -93,14 +93,10 @@ async function localAction(action: string, payload: any) {
     case "save_score": {
       const m = state.matches.find((x) => x.id === payload.id);
       if (m) {
-        m.home_goals =
-          payload.home_goals === "" || payload.home_goals == null
-            ? null
-            : Number(payload.home_goals);
-        m.away_goals =
-          payload.away_goals === "" || payload.away_goals == null
-            ? null
-            : Number(payload.away_goals);
+        const clampGoal = (v: unknown) =>
+          v === "" || v == null ? null : Math.max(0, Math.floor(Number(v) || 0));
+        m.home_goals = clampGoal(payload.home_goals);
+        m.away_goals = clampGoal(payload.away_goals);
         m.pen_winner_id = payload.pen_winner_id || null;
         if (["quartas", "semi", "final", "terceiro"].includes(m.stage)) {
           localPropagate(state);
@@ -146,6 +142,11 @@ async function localAction(action: string, payload: any) {
     case "seed_bracket": {
       const standings = computeStandings(state.players, state.matches);
       if (standings.length < 6) throw new Error("São necessários ao menos 6 classificados.");
+      if (standings.some((r) => r.unresolvedTie)) {
+        throw new Error(
+          "Há empate no corte do Top 6. Crie e resolva a partida de desempate antes de montar o mata-mata.",
+        );
+      }
       const top6 = standings.slice(0, 6).map((r) => r.playerId);
       state.matches = state.matches.filter(
         (m) => !["quartas", "semi", "final", "terceiro"].includes(m.stage),

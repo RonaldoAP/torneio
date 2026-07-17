@@ -31,14 +31,16 @@ export function ScoreEditor({
   }, [match.home_goals, match.away_goals, match.pen_winner_id]);
 
   const bothFilled = home !== "" && away !== "";
-  const isKo = KO_STAGES.includes(match.stage);
+  // Pênaltis só existem no mata-mata e na partida de desempate.
+  // Na LIGA empate é empate (1 ponto pra cada) — nunca há pênalti/prorrogação.
+  const penEligible = KO_STAGES.includes(match.stage) || match.stage === "desempate";
   const isTie = bothFilled && Number(home) === Number(away);
-  const needsPen = isKo && isTie && !!match.home_id && !!match.away_id;
+  const needsPen = penEligible && isTie && !!match.home_id && !!match.away_id;
   const disabled = !match.home_id || !match.away_id;
 
   async function save() {
     if (needsPen && !pen) {
-      onError?.("Empate no mata-mata: escolha o vencedor nos pênaltis.");
+      onError?.("Empate: escolha o vencedor nos pênaltis.");
       return;
     }
     setSaving(true);

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTournament } from "@/lib/useTournament";
 import { adminActions, setAdminSlug } from "@/lib/adminActions";
-import { computeStandings } from "@/lib/standings";
+import { computeStandings, TOP_N } from "@/lib/standings";
+import { computeScorers } from "@/lib/scorers";
 import type { Match, TournamentState } from "@/lib/types";
 import { ScoreEditor } from "@/components/admin/ScoreEditor";
 import { Avatar } from "@/components/ui";
@@ -26,6 +27,8 @@ export function AdminApp({ slug }: { slug?: string }) {
   const [quitId, setQuitId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [undo, setUndo] = useState<{ label: string; state: TournamentState } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Envia o slug secreto em cada gravação (modo Supabase autoriza por ele).
   useEffect(() => {
@@ -42,6 +45,36 @@ export function AdminApp({ slug }: { slug?: string }) {
       if (okMsg) setInfo(okMsg);
     } catch (e: any) {
       setError(e?.message ?? "Erro.");
+    }
+  }
+
+  /** Igual ao act(), mas antes tira um "retrato" do estado atual para permitir
+   *  desfazer a ação (restaura via importar estado). Usado nas ações destrutivas. */
+  async function actUndo(label: string, fn: () => Promise<any>, okMsg?: string) {
+    setError(null);
+    setInfo(null);
+    const snapshot: TournamentState = JSON.parse(
+      JSON.stringify({ config, players, matches }),
+    );
+    try {
+      await fn();
+      setUndo({ label, state: snapshot });
+      if (okMsg) setInfo(okMsg);
+    } catch (e: any) {
+      setError(e?.message ?? "Erro.");
+    }
+  }
+
+  async function doUndo() {
+    if (!undo) return;
+    setError(null);
+    setInfo(null);
+    try {
+      await adminActions.importState(undo.state);
+      setInfo(`Desfeito: ${undo.label}.`);
+      setUndo(null);
+    } catch (e: any) {
+      setError(e?.message ?? "Falha ao desfazer.");
     }
   }
 
@@ -64,6 +97,43 @@ export function AdminApp({ slug }: { slug?: string }) {
 
   const desempates = matches.filter((m) => m.stage === "desempate");
   const standings = computeStandings(players, matches);
+  // Empate no corte do Top 6 que precisa de partida de desempate (raro — só se
+  // cair empatado na linha de classificação). Só aparece quando realmente ocorre.
+  const tiedAtCut = standings.filter((r) => r.unresolvedTie);
+
+  /** Monta a mensagem de classificação para colar no grupo (WhatsApp). */
+  function buildGroupMessage(): string {
+    const nameOf = new Map(players.map((p) => [p.id, p.name] as const));
+    const lines: string[] = [];
+    lines.push(`🏆 ${config.tournament_name} — Classificação`);
+    lines.push("");
+    standings.forEach((r, i) => {
+      const pos = i + 1;
+      const mark = pos <= TOP_N ? "✅" : "▫️";
+      lines.push(`${mark} ${pos}º ${r.name} — ${r.points} pts (${r.played}J ${r.wins}V ${r.draws}E ${r.losses}D)`);
+    });
+    const scorers = computeScorers(players, matches).filter((s) => s.goals > 0);
+    if (scorers.length > 0) {
+      lines.push("");
+      lines.push("⚽ Artilharia");
+      scorers.slice(0, 5).forEach((s) => lines.push(`• ${s.name}: ${s.goals}`));
+    }
+    lines.push("");
+    lines.push(`✅ = classificado (Top ${TOP_N})`);
+    return lines.join("\n");
+  }
+
+  async function copyGroupMessage() {
+    const text = buildGroupMessage();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Fallback: seleção manual via prompt se a área de transferência falhar.
+      window.prompt("Copie a mensagem:", text);
+    }
+  }
 
   function exportJson() {
     const data: TournamentState = { config, players, matches };
@@ -111,6 +181,53 @@ export function AdminApp({ slug }: { slug?: string }) {
       {error && <p className="rounded-xl border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
       {info && <p className="rounded-xl border border-gremio/30 bg-gremio/10 p-3 text-sm text-gremio">{info}</p>}
 
+      {undo && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-branco/30 bg-branco/5 p-3 text-sm">
+          <span className="text-ink-muted">
+            Última ação: <strong className="text-ink">{undo.label}</strong>
+          </span>
+          <div className="flex items-center gap-2">
+            <button className="btn-primary py-1.5 text-sm" onClick={doUndo}>
+              Desfazer
+            </button>
+            <button className="btn-ghost py-1.5 text-sm" onClick={() => setUndo(null)}>
+              Dispensar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Copiar mensagem para o grupo (só no admin) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="btn-ghost" onClick={copyGroupMessage} disabled={standings.length === 0}>
+          📋 Copiar mensagem pro grupo
+        </button>
+        {copied && <span className="text-sm text-gremio">copiado ✓</span>}
+        <span className="text-xs text-ink-muted">Classificação + artilharia, prontinho pra colar no WhatsApp.</span>
+      </div>
+
+      {/* Alerta de empate no corte do Top 6 — só quando realmente acontece */}
+      {tiedAtCut.length >= 2 && (
+        <div className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm">
+          <p className="font-semibold text-danger">⚠ Empate na zona de classificação (Top {TOP_N})</p>
+          <p className="mt-1 text-ink-muted">
+            {tiedAtCut.map((r) => r.name).join(", ")} estão empatados no critério e o confronto
+            direto não resolveu. Crie a partida de desempate abaixo e marque o resultado — só então dá
+            pra montar o mata-mata.
+          </p>
+          <button
+            className="btn-primary mt-2 py-1.5 text-sm"
+            onClick={() => {
+              setDeA(tiedAtCut[0].playerId);
+              setDeB(tiedAtCut[1].playerId);
+              document.getElementById("secao-desempate")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+          >
+            Preparar desempate: {tiedAtCut[0].name} × {tiedAtCut[1].name}
+          </button>
+        </div>
+      )}
+
       {/* Configuração + fases */}
       <section className="panel p-4">
         <h2 className="mb-3 font-display text-xl tracking-wide">Torneio</h2>
@@ -129,7 +246,9 @@ export function AdminApp({ slug }: { slug?: string }) {
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             className="btn-primary"
-            onClick={() => act(() => adminActions.seedBracket(), "Mata-mata montado com o Top 6.")}
+            onClick={() =>
+              actUndo("montar mata-mata", () => adminActions.seedBracket(), "Mata-mata montado com o Top 6.")
+            }
           >
             Montar mata-mata (Top 6)
           </button>
@@ -163,7 +282,7 @@ export function AdminApp({ slug }: { slug?: string }) {
                   "Zerar TODOS os placares? Os confrontos e a chave continuam — só os resultados voltam a ficar em branco.",
                 )
               ) {
-                act(() => adminActions.resetScores(), "Todos os placares foram zerados.");
+                actUndo("zerar placares", () => adminActions.resetScores(), "Todos os placares foram zerados.");
               }
             }}
           >
@@ -254,7 +373,7 @@ export function AdminApp({ slug }: { slug?: string }) {
             disabled={players.length < 2}
             onClick={() => {
               if (confirm("Sortear/refazer os confrontos? Isso reinicia todos os placares da liga.")) {
-                act(() => adminActions.generateLeague(), "Confrontos sorteados.");
+                actUndo("sortear confrontos", () => adminActions.generateLeague(), "Confrontos sorteados.");
               }
             }}
           >
@@ -291,7 +410,7 @@ export function AdminApp({ slug }: { slug?: string }) {
                   `Registrar desistência de ${nm}? Todos os jogos dele viram W.O. 3×0 para os adversários.`,
                 )
               ) {
-                act(() => adminActions.withdraw(quitId), "Desistência registrada (W.O. 3×0).");
+                actUndo(`desistência de ${nm}`, () => adminActions.withdraw(quitId), "Desistência registrada (W.O. 3×0).");
                 setQuitId("");
               }
             }}
@@ -321,7 +440,7 @@ export function AdminApp({ slug }: { slug?: string }) {
       )}
 
       {/* Desempate */}
-      <section className="panel p-4">
+      <section id="secao-desempate" className="panel p-4">
         <h2 className="mb-1 font-display text-xl tracking-wide">Partida de desempate</h2>
         <p className="mb-3 text-xs text-ink-muted">
           Critério 6. Os gols NÃO contam para a artilharia. Empate → escolha o vencedor nos
