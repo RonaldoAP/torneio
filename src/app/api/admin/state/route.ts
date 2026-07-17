@@ -86,6 +86,16 @@ export async function POST(req: Request) {
         break;
       }
 
+      case "reset_scores": {
+        // Zera todos os placares (mantém confrontos e chave), depois repropaga o mata-mata.
+        await db
+          .from("matches")
+          .update({ home_goals: null, away_goals: null, pen_winner_id: null })
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+        await propagateBracket();
+        break;
+      }
+
       case "generate_league": {
         // Regerar reinicia a liga: apaga partidas de liga e desempate.
         await db.from("matches").delete().in("stage", ["liga", "desempate"]);

@@ -155,7 +155,25 @@ export function AdminApp({ slug }: { slug?: string }) {
               Reabrir mata-mata
             </button>
           )}
+          <button
+            className="btn-danger"
+            onClick={() => {
+              if (
+                confirm(
+                  "Zerar TODOS os placares? Os confrontos e a chave continuam — só os resultados voltam a ficar em branco.",
+                )
+              ) {
+                act(() => adminActions.resetScores(), "Todos os placares foram zerados.");
+              }
+            }}
+          >
+            Zerar todos os placares
+          </button>
         </div>
+        <p className="mt-2 text-xs text-ink-muted">
+          “Zerar placares” apaga só os resultados (mantém o sorteio e o mata-mata). Para refazer os
+          confrontos do zero, use “Sortear confrontos” abaixo.
+        </p>
       </section>
 
       {/* Participantes */}

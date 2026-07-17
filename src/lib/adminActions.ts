@@ -62,6 +62,16 @@ async function localAction(action: string, payload: any) {
       if (p) p.photo = payload.photo ?? null;
       break;
     }
+    case "reset_scores": {
+      // Zera todos os placares (mantém confrontos e chave), depois reverte a propagação.
+      for (const m of state.matches) {
+        m.home_goals = null;
+        m.away_goals = null;
+        m.pen_winner_id = null;
+      }
+      localPropagate(state);
+      break;
+    }
     case "generate_league": {
       state.matches = state.matches.filter(
         (m) => m.stage !== "liga" && m.stage !== "desempate",
@@ -191,6 +201,7 @@ export const adminActions = {
   deleteMatch: (id: string) => adminActions.run("delete_match", { id }),
   withdraw: (id: string) => adminActions.run("withdraw", { id }),
   seedBracket: () => adminActions.run("seed_bracket"),
+  resetScores: () => adminActions.run("reset_scores"),
   closeTournament: () => adminActions.run("close_tournament"),
   reopen: (phase: Config["phase"]) => adminActions.run("reopen", { phase }),
   importState: (state: TournamentState) => adminActions.run("import_state", state),
