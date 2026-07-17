@@ -18,7 +18,20 @@ export default function ConfrontosPage() {
       if (!byRound.has(r)) byRound.set(r, []);
       byRound.get(r)!.push(m);
     }
-    return [...byRound.entries()].sort((a, b) => a[0] - b[0]).map(([round, games]) => ({ round, games }));
+    const arr = [...byRound.entries()].map(([round, games]) => ({
+      round,
+      games,
+      // rodada encerrada = todos os jogos com placar lançado
+      finished:
+        games.length > 0 && games.every((g) => g.home_goals != null && g.away_goals != null),
+    }));
+    // Rodadas em andamento no topo (a atual sempre visível); as encerradas
+    // descem para o fim da fila. Dentro de cada grupo, ordem crescente.
+    arr.sort((a, b) => {
+      if (a.finished !== b.finished) return a.finished ? 1 : -1;
+      return a.round - b.round;
+    });
+    return arr;
   }, [matches]);
 
   const hasGames = rounds.length > 0;
@@ -40,10 +53,18 @@ export default function ConfrontosPage() {
         </EmptyState>
       ) : (
         <div className="space-y-5">
-          {rounds.map(({ round, games }) => (
-            <section key={round}>
+          {rounds.map(({ round, games, finished }, i) => {
+            const isCurrent = !finished && i === 0;
+            return (
+            <section key={round} className={finished ? "opacity-60" : ""}>
               <h2 className="mb-2 flex items-center gap-2 px-1 font-display text-sm uppercase tracking-[0.15em] text-ink-muted">
                 <span className="text-cyan">{round}ª</span> Rodada
+                {isCurrent && (
+                  <span className="chip border-cyan/50 text-cyan">jogando agora</span>
+                )}
+                {finished && (
+                  <span className="chip border-line text-ink-muted/70">encerrada</span>
+                )}
               </h2>
               <div className="panel divide-y divide-line/60">
                 {games.map((g) => (
@@ -58,7 +79,8 @@ export default function ConfrontosPage() {
                 ))}
               </div>
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
