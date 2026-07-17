@@ -1,5 +1,11 @@
 import type { Player } from "./types";
-import { generateRoundRobin, shuffle, type RoundRobinResult, type RoundRobinGame } from "./roundRobin";
+import {
+  generateRoundRobin,
+  orderForRest,
+  shuffle,
+  type RoundRobinResult,
+  type RoundRobinGame,
+} from "./roundRobin";
 
 // ============================================================================
 //  Restrições INVISÍVEIS do sorteio (equilíbrio de confrontos).
@@ -79,13 +85,20 @@ export function generateBalancedLeague(
     window: c.window,
   })).filter((c) => c.aId && c.bId && c.aId !== c.bId);
 
+  // Aplica o descanso (ordem interna das rodadas) só no fim, sem afetar as
+  // restrições — elas dependem do nº da rodada, que não muda.
+  const withRest = (r: RoundRobinResult): RoundRobinResult => ({
+    ...r,
+    games: orderForRest(r.games),
+  });
+
   let last = generateRoundRobin(shuffle(players));
-  if (resolved.length === 0) return last;
+  if (resolved.length === 0) return withRest(last);
 
   for (let i = 0; i < maxAttempts; i++) {
     const cand = generateRoundRobin(shuffle(players));
-    if (satisfies(cand, resolved)) return cand;
+    if (satisfies(cand, resolved)) return withRest(cand);
     last = cand;
   }
-  return last;
+  return withRest(last);
 }

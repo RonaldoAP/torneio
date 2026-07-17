@@ -102,12 +102,18 @@ export async function POST(req: Request) {
         const { players } = await loadState();
         const { games } = generateBalancedLeague(players);
         if (games.length > 0) {
-          const rows = games.map((g) => ({
+          // created_at explícito e crescente: a leitura é ordenada por
+          // created_at, então isso preserva a ordem de disputa (o descanso
+          // entre jogos calculado no sorteio). Insert em lote usa now() igual
+          // pra todas as linhas, o que deixaria a ordem interna indefinida.
+          const base = Date.now();
+          const rows = games.map((g, i) => ({
             stage: "liga" as const,
             round: g.round,
             home_id: g.homeId,
             away_id: g.awayId,
             counts_for_scorers: true,
+            created_at: new Date(base + i).toISOString(),
           }));
           await db.from("matches").insert(rows);
         }
