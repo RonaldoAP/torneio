@@ -12,12 +12,14 @@ import { seedBracket } from "@/lib/bracket";
 import { EVENT } from "@/lib/config";
 import type { Match, Player } from "@/lib/types";
 
-const SLIDE_MS = 6000; // tempo de cada tela
+const POLL_MS = 6000; // rebusca de dados (freshness), independente da duração da tela
+const SLIDE_MS_DEFAULT = 6000; // duração padrão de uma tela
 const KO_STAGES = ["quartas", "semi", "final", "terceiro"];
 
 interface Slide {
   key: string;
   label: string;
+  ms: number; // quanto tempo esta tela fica no ar
   node: ReactNode;
 }
 
@@ -31,7 +33,7 @@ export default function TvPage() {
   useEffect(() => {
     const id = setInterval(() => {
       refresh();
-    }, SLIDE_MS);
+    }, POLL_MS);
     return () => clearInterval(id);
   }, [refresh]);
 
@@ -46,6 +48,7 @@ export default function TvPage() {
       list.push({
         key: "class",
         label: "Classificação",
+        ms: 12000, // classificação fica mais tempo
         node: <StandingsTable players={players} matches={matches} big />,
       });
     }
@@ -69,6 +72,7 @@ export default function TvPage() {
       list.push({
         key: `round-${current.round}`,
         label: `${current.round}ª Rodada — ao vivo`,
+        ms: SLIDE_MS_DEFAULT,
         node: (
           <div className="mx-auto w-full max-w-4xl panel divide-y divide-line/60">
             {current.games.map((g) => (
@@ -112,6 +116,7 @@ export default function TvPage() {
       list.push({
         key: "ko",
         label: hasBracket ? "Mata-mata" : "Mata-mata — prévia ao vivo",
+        ms: 5000, // prévia/chave do mata-mata: passagem mais rápida
         node: <Bracket players={players} matches={bracketMatches} />,
       });
     }
@@ -122,6 +127,7 @@ export default function TvPage() {
       list.push({
         key: "scorers",
         label: "Artilharia",
+        ms: SLIDE_MS_DEFAULT,
         node: <ScorersBig players={players} rows={scorers} />,
       });
     }
@@ -160,12 +166,13 @@ function Slideshow({
     return () => clearInterval(id);
   }, []);
 
-  // avança sozinho
+  // avança sozinho — cada tela fica no ar pelo seu próprio tempo
+  const currentMs = slides[safeIndex]?.ms ?? SLIDE_MS_DEFAULT;
   useEffect(() => {
     if (paused || n <= 1) return;
-    const id = setTimeout(() => setIndex((i) => (i + 1) % n), SLIDE_MS);
+    const id = setTimeout(() => setIndex((i) => (i + 1) % n), currentMs);
     return () => clearTimeout(id);
-  }, [safeIndex, paused, n]);
+  }, [safeIndex, paused, n, currentMs]);
 
   // teclado: ← → (navegar), espaço (pausar), F (tela cheia)
   useEffect(() => {
@@ -256,7 +263,7 @@ function Slideshow({
               key={`${current?.key}-${paused}`}
               className="h-full origin-left rounded-full bg-cyan"
               style={{
-                animation: paused ? "none" : `tv-progress ${SLIDE_MS}ms linear forwards`,
+                animation: paused ? "none" : `tv-progress ${currentMs}ms linear forwards`,
                 transform: paused ? "scaleX(1)" : undefined,
               }}
             />
