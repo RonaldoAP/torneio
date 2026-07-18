@@ -85,7 +85,18 @@ export function AdminApp({ slug }: { slug?: string }) {
       if (!byRound.has(r)) byRound.set(r, []);
       byRound.get(r)!.push(m);
     }
-    return [...byRound.entries()].sort((a, b) => a[0] - b[0]);
+    // Rodada em andamento no topo; rodadas já encerradas descem pro fim.
+    return [...byRound.entries()]
+      .map(([round, games]) => ({
+        round,
+        games,
+        finished:
+          games.length > 0 && games.every((g) => g.home_goals != null && g.away_goals != null),
+      }))
+      .sort((a, b) => {
+        if (a.finished !== b.finished) return a.finished ? 1 : -1;
+        return a.round - b.round;
+      });
   }, [matches]);
 
   const koMatches = useMemo(() => {
@@ -425,16 +436,23 @@ export function AdminApp({ slug }: { slug?: string }) {
         <section className="panel p-4">
           <h2 className="mb-3 font-display text-xl tracking-wide">Placares — Liga</h2>
           <div className="space-y-4">
-            {ligaRounds.map(([round, games]) => (
-              <div key={round}>
-                <h3 className="mb-2 font-display tracking-wide text-ink-muted">Rodada {round}</h3>
-                <div className="grid gap-2">
-                  {games.map((m) => (
-                    <ScoreEditor key={m.id} match={m} players={players} onError={setError} />
-                  ))}
+            {ligaRounds.map(({ round, games, finished }, i) => {
+              const isCurrent = !finished && i === 0;
+              return (
+                <div key={round} className={finished ? "opacity-70" : ""}>
+                  <h3 className="mb-2 flex items-center gap-2 font-display tracking-wide text-ink-muted">
+                    Rodada {round}
+                    {isCurrent && <span className="chip border-cyan/50 text-cyan">jogando agora</span>}
+                    {finished && <span className="chip border-line text-ink-muted/70">encerrada</span>}
+                  </h3>
+                  <div className="grid gap-2">
+                    {games.map((m) => (
+                      <ScoreEditor key={m.id} match={m} players={players} onError={setError} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
