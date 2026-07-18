@@ -12,7 +12,7 @@ import { seedBracket } from "@/lib/bracket";
 import { EVENT } from "@/lib/config";
 import type { Match, Player } from "@/lib/types";
 
-const SLIDE_MS = 13000; // tempo de cada tela
+const SLIDE_MS = 6000; // tempo de cada tela
 const KO_STAGES = ["quartas", "semi", "final", "terceiro"];
 
 interface Slide {
@@ -22,7 +22,18 @@ interface Slide {
 }
 
 export default function TvPage() {
-  const { players, matches, config, mode, connected } = useTournament();
+  const { players, matches, config, mode, connected, refresh } = useTournament();
+
+  // Telão pode rodar por horas numa TV onde o websocket do realtime cai sem
+  // avisar. Para garantir que a tela nunca fique defasada, rebuscamos os dados
+  // do servidor a cada troca de slide (a cada SLIDE_MS), independente do
+  // realtime. Sem reload de página e sem "piscar".
+  useEffect(() => {
+    const id = setInterval(() => {
+      refresh();
+    }, SLIDE_MS);
+    return () => clearInterval(id);
+  }, [refresh]);
 
   // ---- monta as telas disponíveis conforme os dados ----
   const slides = useMemo<Slide[]>(() => {
