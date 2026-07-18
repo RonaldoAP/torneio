@@ -66,6 +66,16 @@ body {
   }
 }
 
+/* Barra de progresso do slideshow do telão */
+@keyframes tv-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 /* Foco de teclado sempre visível */
 :focus-visible {
   outline: 2px solid #25e4ff;
