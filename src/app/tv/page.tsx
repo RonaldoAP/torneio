@@ -7,7 +7,7 @@ import { Bracket } from "@/components/Bracket";
 import { MatchRow } from "@/components/MatchRow";
 import { LiveBadge, Avatar } from "@/components/ui";
 import { computeStandings } from "@/lib/standings";
-import { computeScorers } from "@/lib/scorers";
+import { computeDefense, computeScorers } from "@/lib/scorers";
 import { seedBracket } from "@/lib/bracket";
 import { eventInfo } from "@/lib/editions";
 import type { Match, Player } from "@/lib/types";
@@ -130,6 +130,17 @@ export default function TvPage() {
         label: "Artilharia",
         ms: SLIDE_MS_DEFAULT,
         node: <ScorersBig players={players} rows={scorers} />,
+      });
+    }
+
+    // 5) Melhor defesa
+    const defense = computeDefense(players, matches);
+    if (defense.length > 0) {
+      list.push({
+        key: "defense",
+        label: "Melhor defesa",
+        ms: SLIDE_MS_DEFAULT,
+        node: <DefenseBig players={players} rows={defense.slice(0, 8)} />,
       });
     }
 
@@ -316,6 +327,40 @@ function ScorersBig({
           <span className="font-display text-4xl leading-none text-ink sm:text-5xl">{r.goals}</span>
           <span className="w-16 text-right text-sm text-ink-muted">
             {r.games} {r.games === 1 ? "jogo" : "jogos"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function DefenseBig({
+  players,
+  rows,
+}: {
+  players: Player[];
+  rows: ReturnType<typeof computeDefense>;
+}) {
+  const photoById = new Map(players.map((p) => [p.id, p.photo] as const));
+  return (
+    <div className="mx-auto w-full max-w-4xl panel divide-y divide-line/60">
+      {rows.map((r, i) => (
+        <div key={r.playerId} className="flex items-center gap-4 px-5 py-4">
+          <span
+            className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl font-display text-xl ${
+              i === 0 ? "bg-cyan/20 text-cyan" : "text-ink-muted"
+            }`}
+          >
+            {i + 1}
+          </span>
+          <Avatar name={r.name} photo={photoById.get(r.playerId)} size={52} />
+          <span className="flex-1 truncate font-display text-2xl text-ink sm:text-3xl">{r.name}</span>
+          {i === 0 && <span className="chip border-cyan/50 text-cyan">Melhor defesa 🧤</span>}
+          <span className="font-display text-4xl leading-none text-ink sm:text-5xl">{r.conceded}</span>
+          <span className="w-24 text-right text-sm text-ink-muted">
+            sofridos em {r.games} {r.games === 1 ? "jogo" : "jogos"}
           </span>
         </div>
       ))}

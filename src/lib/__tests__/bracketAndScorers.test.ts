@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { seedBracket, recomputeBracket, championAndRunnerUp, thirdPlace } from "../bracket";
-import { computeScorers } from "../scorers";
+import { computeDefense, computeScorers } from "../scorers";
 import type { Match, Player } from "../types";
 
 const top6 = ["s1", "s2", "s3", "s4", "s5", "s6"];
@@ -108,5 +108,76 @@ describe("computeScorers", () => {
     expect(a.goals).toBe(5); // 3 (liga) + 2 (final); desempate ignorado
     expect(a.games).toBe(2);
     expect(table[0].playerId).toBe("a");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Melhor defesa (medalha da 2ª edição): quem sofreu menos gols.
+// Segue a MESMA regra da artilharia — sem W.O. e sem desempate.
+// ---------------------------------------------------------------------------
+describe("melhor defesa", () => {
+  const players: Player[] = [
+    { id: "a", name: "Ana", created_at: "" },
+    { id: "b", name: "Bia", created_at: "" },
+    { id: "c", name: "Caio", created_at: "" },
+    { id: "d", name: "Duda", created_at: "" },
+  ];
+
+  const jogo = (p: Partial<Match>): Match => ({
+    id: p.id ?? "m",
+    stage: p.stage ?? "liga",
+    round: p.round ?? 1,
+    home_id: p.home_id ?? null,
+    away_id: p.away_id ?? null,
+    home_goals: p.home_goals ?? null,
+    away_goals: p.away_goals ?? null,
+    pen_winner_id: p.pen_winner_id ?? null,
+    counts_for_scorers: p.counts_for_scorers ?? true,
+    slot: p.slot ?? null,
+    created_at: "",
+  });
+
+  it("ordena por menos gols sofridos e conta jogos sem sofrer", () => {
+    const matches = [
+      jogo({ id: "1", home_id: "a", away_id: "b", home_goals: 2, away_goals: 0 }),
+      jogo({ id: "2", home_id: "a", away_id: "c", home_goals: 1, away_goals: 1 }),
+      jogo({ id: "3", home_id: "b", away_id: "c", home_goals: 0, away_goals: 4 }),
+    ];
+    const d = computeDefense(players, matches);
+    // Ana sofreu 1 · Caio sofreu 1 (mas em 2 jogos, igual à Ana) · Bia sofreu 6
+    expect(d.map((r) => [r.name, r.conceded])).toEqual([
+      ["Ana", 1],
+      ["Caio", 1],
+      ["Bia", 6],
+    ]);
+    expect(d.find((r) => r.name === "Ana")!.cleanSheets).toBe(1);
+    expect(d.find((r) => r.name === "Bia")!.cleanSheets).toBe(0);
+  });
+
+  it("não conta gols de W.O. nem de desempate", () => {
+    const matches = [
+      jogo({ id: "1", home_id: "a", away_id: "b", home_goals: 0, away_goals: 1 }),
+      // W.O. contra a Ana: 3 gols que ninguém fez nela
+      jogo({
+        id: "2",
+        home_id: "a",
+        away_id: "c",
+        home_goals: 0,
+        away_goals: 3,
+        counts_for_scorers: false,
+      }),
+      // desempate também fica de fora
+      jogo({ id: "3", stage: "desempate", home_id: "a", away_id: "d", home_goals: 0, away_goals: 5 }),
+    ];
+    const ana = computeDefense(players, matches).find((r) => r.name === "Ana")!;
+    expect(ana.conceded).toBe(1);
+    expect(ana.games).toBe(1);
+  });
+
+  it("quem ainda não jogou fica fora do ranking", () => {
+    const d = computeDefense(players, [
+      jogo({ id: "1", home_id: "a", away_id: "b", home_goals: 1, away_goals: 1 }),
+    ]);
+    expect(d.map((r) => r.name).sort()).toEqual(["Ana", "Bia"]);
   });
 });

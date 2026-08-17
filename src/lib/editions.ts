@@ -1,6 +1,6 @@
-import type { Edition, Match, Player, ScorerRow, StandingRow } from "./types";
+import type { DefenseRow, Edition, Match, Player, ScorerRow, StandingRow } from "./types";
 import { computeStandings } from "./standings";
-import { computeScorers } from "./scorers";
+import { computeDefense, computeScorers } from "./scorers";
 import { championAndRunnerUp, thirdPlace } from "./bracket";
 import { EVENT } from "./config";
 
@@ -72,6 +72,9 @@ export interface EditionSummary {
   runnerUpId: string | null;
   thirdId: string | null;
   topScorer: ScorerRow | null;
+  bestDefense: DefenseRow | null;
+  /** último colocado (lanterna) — null enquanto não houver classificação */
+  lastPlaceId: string | null;
   /** partidas com placar lançado */
   played: number;
   /** total de partidas da edição */
@@ -82,6 +85,7 @@ export function summarizeEdition(players: Player[], matches: Match[]): EditionSu
   const standings = computeStandings(players, matches);
   const scorers = computeScorers(players, matches).filter((s) => s.goals > 0);
   const { championId, runnerUpId } = championAndRunnerUp(matches);
+  const defense = computeDefense(players, matches);
   return {
     standings,
     scorers,
@@ -89,6 +93,8 @@ export function summarizeEdition(players: Player[], matches: Match[]): EditionSu
     runnerUpId,
     thirdId: thirdPlace(matches),
     topScorer: scorers[0] ?? null,
+    bestDefense: defense[0] ?? null,
+    lastPlaceId: standings.length > 0 ? standings[standings.length - 1].playerId : null,
     played: matches.filter((m) => m.home_goals != null && m.away_goals != null).length,
     total: matches.length,
   };

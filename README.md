@@ -129,7 +129,7 @@ só definem quem fica na frente.
 | `/confrontos`   | Jogos da liga por rodada + quem folga (nº ímpar de jogadores)          |
 | `/classificacao`| Tabela ao vivo (P, J, V, E, D, GP, GC, SG) — Top 6 destacado           |
 | `/mata-mata`    | Chaveamento (Repescagem → Semis → Final) + 3º lugar + banner de campeão |
-| `/goleadores`   | Artilharia por participante                                            |
+| `/goleadores`   | Artilharia + melhor defesa (gols sofridos)                             |
 | `/historico`    | Edições anteriores (aparece quando existe alguma arquivada)            |
 | `/historico/<n>`| Uma edição arquivada: pódio, classificação final, chave e artilharia   |
 | `/tv`           | Modo TV/Projetor (fonte grande, tela cheia, tempo real)               |
@@ -144,7 +144,9 @@ só definem quem fica na frente.
 - **Desempate da classificação (nesta ordem):** 1) pontos · 2) vitórias · 3) saldo ·
   4) gols marcados · 5) confronto direto · 6) partida de desempate.
 - **Artilharia:** por participante (o placar do lado dele); soma liga + mata-mata
-  (tempo normal + prorrogação). **Não** conta desempate nem pênaltis.
+  (tempo normal + prorrogação). **Não** conta W.O., desempate nem pênaltis.
+- **Melhor defesa:** quem sofreu menos gols, com o **mesmo filtro** da artilharia — por
+  isso pode divergir da coluna **GC** da classificação, que soma tudo (lá o W.O. vale pontos).
 - **Mata-mata (Top 6):** 1º e 2º vão **direto à semifinal**. Repescagem: 4º×5º e 3º×6º.
   Semis: 1º × vencedor(4º×5º) e 2º × vencedor(3º×6º). Final e disputa de 3º lugar.
   Jogo único; empate → prorrogação → pênaltis. O 1º e o 2º só se cruzam na final.

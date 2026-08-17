@@ -85,6 +85,15 @@ export interface ScorerRow {
   games: number; // jogos que contam
 }
 
+/** Melhor defesa: quem sofreu menos gols (mesmo filtro da artilharia). */
+export interface DefenseRow {
+  playerId: string;
+  name: string;
+  conceded: number; // gols sofridos
+  games: number; // jogos que contam
+  cleanSheets: number; // jogos sem sofrer gol
+}
+
 export interface TournamentState {
   config: Config;
   players: Player[];

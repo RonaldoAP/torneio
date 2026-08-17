@@ -19,7 +19,8 @@ export default function EdicaoArquivadaPage({ params }: { params: { edicao: stri
 
   const info = editions.find((e) => e.id === id) ?? null;
   const ev = eventInfo(info);
-  const { championId, runnerUpId, thirdId, topScorer, scorers } = summarizeEdition(players, matches);
+  const { championId, runnerUpId, thirdId, topScorer, bestDefense, lastPlaceId, scorers } =
+    summarizeEdition(players, matches);
   const nameOf = (pid: string | null) => players.find((p) => p.id === pid) ?? null;
   const hasBracket = matches.some((m) => KO_STAGES.includes(m.stage));
 
@@ -28,6 +29,25 @@ export default function EdicaoArquivadaPage({ params }: { params: { edicao: stri
     { label: "Vice", medal: "🥈", player: nameOf(runnerUpId) },
     { label: "3º lugar", medal: "🥉", player: nameOf(thirdId) },
   ].filter((x) => x.player);
+
+  const premios = [
+    topScorer && {
+      label: "Artilheiro",
+      medal: "⚽",
+      texto: `${topScorer.name} — ${topScorer.goals} gols`,
+    },
+    bestDefense && {
+      label: "Melhor defesa",
+      medal: "🧤",
+      texto: `${bestDefense.name} — ${bestDefense.conceded} sofridos`,
+    },
+    lastPlaceId &&
+      nameOf(lastPlaceId) && {
+        label: "Lanterna",
+        medal: "🔻",
+        texto: nameOf(lastPlaceId)!.name,
+      },
+  ].filter(Boolean) as { label: string; medal: string; texto: string }[];
 
   if (!valid) {
     return (
@@ -80,15 +100,17 @@ export default function EdicaoArquivadaPage({ params }: { params: { edicao: stri
             </section>
           )}
 
-          {topScorer && (
-            <section className="panel flex items-center gap-3 p-3.5">
-              <span className="text-2xl">⚽</span>
-              <div>
-                <p className="text-xs uppercase tracking-widest text-ink-muted">Artilheiro</p>
-                <p className="font-display text-lg tracking-wide text-ink">
-                  {topScorer.name} — {topScorer.goals} gols
-                </p>
-              </div>
+          {premios.length > 0 && (
+            <section className="grid gap-2 sm:grid-cols-3">
+              {premios.map(({ label, medal, texto }) => (
+                <div key={label} className="panel flex items-center gap-3 p-3.5">
+                  <span className="text-2xl">{medal}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-widest text-ink-muted">{label}</p>
+                    <p className="truncate font-display text-lg tracking-wide text-ink">{texto}</p>
+                  </div>
+                </div>
+              ))}
             </section>
           )}
 

@@ -124,7 +124,23 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
         <li>🥉 <span className="text-branco">3º lugar:</span> Troféu</li>
         <li>🔻 <span className="text-branco">Lanterna (último):</span> Medalha de Lanterna</li>
         <li>🎖️ <span className="text-branco">Demais participantes:</span> Medalha de participação</li>
+        <li>⚽ <span className="text-branco">Artilheiro:</span> Medalha — quem fizer mais gols</li>
+        <li>🧤 <span className="text-branco">Melhor defesa:</span> Medalha — quem sofrer menos gols</li>
       </ul>
+    ),
+  },
+  {
+    n: "12",
+    title: "Artilheiro e melhor defesa",
+    body: (
+      <p>
+        <span className="text-branco">Artilheiro</span> é quem marcar mais gols;{" "}
+        <span className="text-branco">melhor defesa</span>, quem sofrer menos. As duas contas
+        somam liga + mata-mata e <span className="text-branco">não contam gols de W.O. nem de
+        partida de desempate</span> — por isso a melhor defesa pode não bater com a coluna GC da
+        classificação, que soma tudo porque ali o W.O. vale pontos. Empate na artilharia: leva
+        quem fez os gols em menos jogos; na defesa, quem sofreu menos em mais jogos.
+      </p>
     ),
   },
 ];

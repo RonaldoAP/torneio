@@ -153,7 +153,7 @@ src/lib/
   editions.ts         # edições: filtro, resumo do histórico e blindagem do remover
   standings.ts        # classificação + desempates (6 critérios) + TOP_N=6
   bracket.ts          # mata-mata Alternativa B (seed/recompute/campeão)
-  scorers.ts          # artilharia
+  scorers.ts          # artilharia + melhor defesa (gols sofridos)
   image.ts            # redimensiona foto de perfil (canvas → data URI)
   __tests__/          # testes Vitest de cada módulo acima
 
@@ -207,6 +207,18 @@ Classificam 6; **1º e 2º vão direto à semifinal**:
 - Jogo único; empate → prorrogação → **pênaltis** (`pen_winner_id`).
 - A chave **avança sozinha**: ao lançar cada placar, o vencedor sobe de fase
   (`recomputeBracket`). Obs.: a disputa de **3º lugar é decidida antes da final**.
+
+### Artilheiro e melhor defesa (medalhas)
+- **Artilheiro:** mais gols (`computeScorers`). **Melhor defesa:** menos gols sofridos
+  (`computeDefense`, em `scorers.ts`).
+- As duas usam **o mesmo filtro** (`counts_for_scorers`): **não contam W.O. nem
+  desempate**. Por isso a melhor defesa **pode divergir da coluna GC** da
+  classificação, que soma tudo (lá o W.O. precisa valer, porque decide pontos).
+  Isso é intencional e está escrito no regulamento e na tela.
+- Desempate: artilharia → menos jogos; defesa → mais jogos. Quem não jogou não entra
+  no ranking de defesa.
+- Aparecem em `/goleadores`, no telão (slide próprio) e no "copiar mensagem pro grupo"
+  (junto com a lanterna).
 
 ### Desistência / W.O. (`withdraw`)
 - Se alguém desiste, **todos os jogos dele viram W.O. 3×0 para os adversários**
@@ -340,6 +352,8 @@ discard_edition, import_state, reset_local`.
     arquivar/abrir edição no painel, `/historico` e `/historico/<n>` (pódio,
     classificação final, chave e artilharia), dados do evento editáveis no painel.
 17. **Blindagem do "Remover participante"** (o footgun do incidente do Mosquito).
+18. **Medalhas de artilheiro e melhor defesa** (2ª edição): `computeDefense`, tabela em
+    `/goleadores`, slide no telão, lanterna + defesa na mensagem do grupo e no histórico.
 
 ---
 

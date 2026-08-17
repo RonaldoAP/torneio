@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTournament } from "@/lib/useTournament";
 import { adminActions, setAdminSlug } from "@/lib/adminActions";
 import { computeStandings, TOP_N } from "@/lib/standings";
-import { computeScorers } from "@/lib/scorers";
+import { computeDefense, computeScorers } from "@/lib/scorers";
 import { editionLabel, eventInfo, removalBlockedMessage, removalImpact } from "@/lib/editions";
 import type { Match, Player, TournamentState } from "@/lib/types";
 import { ScoreEditor } from "@/components/admin/ScoreEditor";
@@ -165,6 +165,16 @@ export function AdminApp({ slug }: { slug?: string }) {
       lines.push("");
       lines.push("⚽ Artilharia");
       scorers.slice(0, 5).forEach((s) => lines.push(`• ${s.name}: ${s.goals}`));
+    }
+    const defesa = computeDefense(players, matches);
+    if (defesa.length > 0) {
+      lines.push("");
+      lines.push("🧤 Melhor defesa (gols sofridos)");
+      defesa.slice(0, 3).forEach((d) => lines.push(`• ${d.name}: ${d.conceded}`));
+    }
+    if (standings.length > 0) {
+      lines.push("");
+      lines.push(`🔻 Lanterna: ${standings[standings.length - 1].name}`);
     }
     lines.push("");
     lines.push(`✅ = classificado (Top ${TOP_N})`);
