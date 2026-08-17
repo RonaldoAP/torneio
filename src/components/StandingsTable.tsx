@@ -32,18 +32,17 @@ export function StandingsTable({
   const ptsTam = big ? (apertado ? "text-2xl" : "text-4xl") : "text-xl";
   const linhaPad = big ? (apertado ? "py-1.5" : medio ? "py-2.5" : "py-4") : "py-3";
 
-  const th = `px-2 py-2.5 font-display font-semibold uppercase tracking-[0.12em] text-ink-muted ${
+  const th = `px-1.5 py-2.5 sm:px-2 font-display font-semibold uppercase tracking-[0.12em] text-ink-muted ${
     big ? "text-base" : "text-[11px]"
   }`;
-  const num = `px-2 text-center font-display tabular text-ink ${linhaPad} ${numTam}`;
+  const num = `px-1.5 text-center font-display tabular text-ink sm:px-2 ${linhaPad} ${numTam}`;
 
   return (
     <div className="panel overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-line">
-            <th className={`${th} pl-3 text-left`} />
-            <th className={`${th} text-left`}>Participante</th>
+            <th className={`${th} pl-3 text-left`}>Participante</th>
             <th className={`${th} text-center text-branco`}>Pts</th>
             <th className={`${th} text-center`}>PJ</th>
             <th className={`${th} text-center`}>V</th>
@@ -64,6 +63,9 @@ export function StandingsTable({
           {rows.map((r, i) => {
             const pos = i + 1;
             const qualified = pos <= TOP_N;
+            // Azul para quem está na zona de classificação, branco para quem
+            // está fora — vale para o número e para a moldura da foto.
+            const cor = qualified ? "#3E9BE9" : "#FFFFFF";
             return (
               <tr
                 key={r.playerId}
@@ -71,30 +73,34 @@ export function StandingsTable({
                   qualified ? "bg-azul/[0.07]" : ""
                 }`}
               >
-                {/* posição + barra lateral (zona de classificação) */}
-                <td className="py-2 pl-0">
-                  <span className="flex items-center">
-                    <span
-                      className={`${big ? (apertado ? "h-9 w-1.5" : "h-14 w-1.5") : "h-11 w-1"} ${
-                        qualified ? "bg-azul" : "bg-ink-muted/25"
-                      }`}
-                    />
-                    <span
-                      className={`ml-2 w-7 text-center font-display font-bold tabular ${
-                        big ? (apertado ? "text-2xl" : "text-3xl") : "text-xl"
-                      }`}
-                      // classificado em azul, quem está fora em branco
-                      style={{ color: qualified ? "#3E9BE9" : "#FFFFFF" }}
-                    >
-                      {pos}
-                    </span>
-                  </span>
-                </td>
-
-                {/* escudo (foto) + nome em caixa alta */}
-                <td className={`px-2 text-left ${linhaPad}`}>
+                {/* escudo (foto) com a posição no canto + nome em caixa alta.
+                    A posição vive dentro da foto para o nome ficar com a linha
+                    inteira — com os gols preenchidos, a coluna extra fazia o
+                    nome truncar no celular. */}
+                <td
+                  className={`pl-2 pr-2 text-left ${linhaPad}`}
+                  style={{ borderLeft: `3px solid ${cor}` }}
+                >
                   <span className="flex items-center gap-2.5">
-                    <Avatar name={r.name} photo={photoById.get(r.playerId)} size={fotoTam} />
+                    <span className="relative shrink-0 leading-none">
+                      <Avatar
+                        name={r.name}
+                        photo={photoById.get(r.playerId)}
+                        size={fotoTam}
+                        frame={cor}
+                      />
+                      <span
+                        className="absolute bottom-0 left-0 grid place-items-center bg-base/85 font-display font-bold leading-none tabular"
+                        style={{
+                          width: fotoTam * 0.46,
+                          height: fotoTam * 0.42,
+                          fontSize: fotoTam * 0.34,
+                          color: cor,
+                        }}
+                      >
+                        {pos}
+                      </span>
+                    </span>
                     <span
                       className={`truncate font-display font-bold uppercase tracking-wide text-ink ${nomeTam}`}
                     >

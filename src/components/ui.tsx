@@ -54,11 +54,14 @@ export function Avatar({
   photo,
   size = 40,
   round = false,
+  frame,
 }: {
   name: string;
   photo?: string | null;
   size?: number;
   round?: boolean;
+  /** cor da moldura — usada para marcar quem está classificado */
+  frame?: string;
 }) {
   const initials = name
     .trim()
@@ -72,15 +75,22 @@ export function Avatar({
     ? "rounded-full border border-white/15"
     : "foto-frame";
 
+  const cor = frame ? { borderColor: frame } : undefined;
+
   if (photo) {
     // eslint-disable-next-line @next/next/no-img-element
     return (
-      <img src={photo} alt={name} style={dim} className={`shrink-0 object-cover ${shape}`} />
+      <img
+        src={photo}
+        alt={name}
+        style={{ ...dim, ...cor }}
+        className={`shrink-0 object-cover ${shape}`}
+      />
     );
   }
   return (
     <span
-      style={{ ...dim, fontSize: size * 0.4 }}
+      style={{ ...dim, ...cor, fontSize: size * 0.4 }}
       className={`grid shrink-0 place-items-center bg-white/5 font-display leading-none text-ink-muted ${shape}`}
     >
       {initials}
