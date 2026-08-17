@@ -82,20 +82,25 @@ export function StandingsTable({
                   style={{ borderLeft: `3px solid ${cor}` }}
                 >
                   <span className="flex items-center gap-2.5">
-                    <span className="relative shrink-0 leading-none">
+                    <span className="relative inline-flex shrink-0">
                       <Avatar
                         name={r.name}
                         photo={photoById.get(r.playerId)}
                         size={fotoTam}
                         frame={cor}
                       />
+                      {/* selo da posição: fundo sólido (a foto atrás tirava a
+                          leitura) e encaixado dentro da moldura */}
                       <span
-                        className="absolute bottom-0 left-0 grid place-items-center bg-base/85 font-display font-bold leading-none tabular"
+                        className="absolute grid place-items-center font-display font-bold leading-none tabular"
                         style={{
-                          width: fotoTam * 0.46,
-                          height: fotoTam * 0.42,
-                          fontSize: fotoTam * 0.34,
+                          left: 2,
+                          bottom: 2,
+                          width: fotoTam * 0.38,
+                          height: fotoTam * 0.34,
+                          fontSize: fotoTam * 0.28,
                           color: cor,
+                          backgroundColor: "#01040A",
                         }}
                       >
                         {pos}
