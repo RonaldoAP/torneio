@@ -117,8 +117,8 @@ export default function TvPage() {
       list.push({
         key: "ko",
         label: hasBracket ? "Mata-mata" : "Mata-mata — prévia ao vivo",
-        ms: 5000, // prévia/chave do mata-mata: passagem mais rápida
-        node: <Bracket players={players} matches={bracketMatches} />,
+        ms: 8000, // a chave tem foto+nome de todo mundo: dá tempo de ler
+        node: <Bracket players={players} matches={bracketMatches} big />,
       });
     }
 

@@ -4,143 +4,264 @@ import { useTournament } from "@/lib/useTournament";
 import { PageHeader, LiveBadge } from "@/components/ui";
 import { editionLabel, eventInfo } from "@/lib/editions";
 
-const RULES: { n: string; title: string; body: React.ReactNode }[] = [
+/* Blocos de leitura: o regulamento é lido no celular, em pé, no meio do jogo —
+   então nada de parágrafo corrido. Tudo vira lista curta, com o termo que
+   importa destacado. */
+const Chave = ({ children }: { children: React.ReactNode }) => (
+  <span className="font-semibold text-branco">{children}</span>
+);
+
+const Lista = ({ children }: { children: React.ReactNode }) => (
+  <ul className="list-disc space-y-1.5 pl-5 leading-relaxed marker:text-cyan/60">{children}</ul>
+);
+
+const Ordem = ({ children }: { children: React.ReactNode }) => (
+  <ol className="list-decimal space-y-1.5 pl-5 leading-relaxed marker:font-display marker:text-cyan/70">
+    {children}
+  </ol>
+);
+
+/** Linha "rótulo → valor", para o que é tabelinha e não frase. */
+const Dado = ({ rotulo, children }: { rotulo: string; children: React.ReactNode }) => (
+  <div className="flex flex-wrap items-baseline gap-x-2 border-b border-line/60 py-1.5 last:border-0">
+    <span className="min-w-[7.5rem] font-display text-[13px] uppercase tracking-wider text-ink-muted">
+      {rotulo}
+    </span>
+    <span className="flex-1 leading-relaxed">{children}</span>
+  </div>
+);
+
+const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }[] = [
   {
     n: "01",
     title: "Formato",
+    wide: true,
     body: (
-      <ul className="list-disc space-y-1 pl-5">
-        <li>Fase de liga: pontos corridos em turno único — todos contra todos, um jogo cada.</li>
-        <li>Classificam-se os 6 primeiros para a fase final.</li>
+      <Lista>
         <li>
-          <span className="text-branco">1º e 2º avançam direto para a semifinal.</span>
+          <Chave>Fase de liga:</Chave> pontos corridos em turno único — todos contra todos, um jogo
+          cada.
         </li>
-        <li>Repescagem: 3º×6º e 4º×5º.</li>
-        <li>Semifinais: 1º × vencedor de (4º×5º) · 2º × vencedor de (3º×6º).</li>
-        <li>Final e disputa de 3º lugar. O 1º e o 2º só podem se enfrentar na final.</li>
-      </ul>
+        <li>
+          Classificam-se os <Chave>6 primeiros</Chave> para a fase final.
+        </li>
+        <li>
+          <Chave>1º e 2º avançam direto para a semifinal.</Chave>
+        </li>
+        <li>
+          <Chave>Repescagem:</Chave> 3º×6º e 4º×5º.
+        </li>
+        <li>
+          <Chave>Semifinais:</Chave> 1º × vencedor de (4º×5º) · 2º × vencedor de (3º×6º).
+        </li>
+        <li>
+          Final e disputa de 3º lugar. O 1º e o 2º só podem se enfrentar na final.
+        </li>
+      </Lista>
     ),
   },
   {
     n: "02",
     title: "Pontuação",
-    body: <p>Vitória: 3 · Empate: 1 · Derrota: 0.</p>,
+    body: (
+      <div className="flex gap-2">
+        {[
+          { k: "Vitória", v: "3" },
+          { k: "Empate", v: "1" },
+          { k: "Derrota", v: "0" },
+        ].map(({ k, v }) => (
+          <div
+            key={k}
+            className="flex-1 rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-center"
+          >
+            <div className="font-display text-3xl leading-none text-branco">{v}</div>
+            <div className="mt-1 font-display text-[12px] uppercase tracking-widest text-ink-muted">
+              {k}
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
   },
   {
     n: "03",
     title: "Critérios de desempate (fase de liga)",
     body: (
-      <p>
-        Nesta ordem: 1) pontos; 2) vitórias; 3) saldo de gols; 4) gols marcados; 5) confronto
-        direto; 6) nova partida entre os empatados (os gols dessa partida não contam para a
-        artilharia, só definem quem avança).
-      </p>
+      <>
+        <p className="mb-2">Aplicados nesta ordem, um a um, até desempatar:</p>
+        <Ordem>
+          <li>Pontos</li>
+          <li>Vitórias</li>
+          <li>Saldo de gols</li>
+          <li>Gols marcados</li>
+          <li>Confronto direto</li>
+          <li>
+            <Chave>Nova partida</Chave> entre os empatados
+          </li>
+        </Ordem>
+        <p className="mt-2 text-xs text-ink-muted">
+          Os gols da partida de desempate não contam para a artilharia — ela só define quem fica
+          na frente.
+        </p>
+      </>
     ),
   },
   {
     n: "04",
     title: "Configurações das partidas",
     body: (
-      <p>
-        5 minutos por tempo (10 min por partida); velocidade e câmera padrão; lesões, cartões e
-        impedimentos ativados.
-      </p>
+      <div>
+        <Dado rotulo="Duração">5 minutos por tempo — 10 minutos de partida</Dado>
+        <Dado rotulo="Velocidade">Padrão</Dado>
+        <Dado rotulo="Câmera">Padrão</Dado>
+        <Dado rotulo="Ativados">Lesões, cartões e impedimentos</Dado>
+      </div>
     ),
   },
   {
     n: "05",
     title: "Escolha de times",
     body: (
-      <p>
-        Cada jogador escolhe o time que quiser, livremente, inclusive é permitido os dois usarem o
-        mesmo time na mesma partida.
-      </p>
+      <Lista>
+        <li>Cada um escolhe o time que quiser, livremente.</li>
+        <li>
+          <Chave>É permitido</Chave> os dois usarem o mesmo time na mesma partida.
+        </li>
+      </Lista>
     ),
   },
   {
     n: "06",
     title: "Mata-mata",
+    wide: true,
     body: (
-      <p>
-        Classificam-se 6. O 1º e o 2º entram direto na semifinal; 3º a 6º disputam a repescagem
-        (3º×6º e 4º×5º) por uma vaga na semi. Jogo único em todas as fases; empate no tempo normal →
-        prorrogação; persistindo → pênaltis; quem vencer avança (sem critério de saldo). Há disputa
-        de 3º lugar entre os perdedores das semifinais.
-      </p>
+      <Lista>
+        <li>Classificam-se 6. O 1º e o 2º entram direto na semifinal.</li>
+        <li>3º a 6º disputam a repescagem (3º×6º e 4º×5º) por uma vaga na semi.</li>
+        <li>
+          <Chave>Jogo único</Chave> em todas as fases — não há critério de saldo.
+        </li>
+        <li>
+          Empate no tempo normal → <Chave>prorrogação</Chave>; persistindo →{" "}
+          <Chave>pênaltis</Chave>. Quem vencer avança.
+        </li>
+        <li>Há disputa de 3º lugar entre os perdedores das semifinais.</li>
+      </Lista>
     ),
   },
   {
     n: "07",
     title: "Conduta e W.O.",
     body: (
-      <p>
-        Pausas só com a bola parada; tolerância de atraso de 5 minutos, após isso derrota por W.O.
-        (3×0); conduta antidesportiva pode gerar advertência ou eliminação, a critério da
-        organização.
-      </p>
+      <Lista>
+        <li>Pausas só com a bola parada.</li>
+        <li>
+          Atraso: tolerância de <Chave>5 minutos</Chave>. Depois disso, derrota por{" "}
+          <Chave>W.O. (3×0)</Chave>.
+        </li>
+        <li>
+          Conduta antidesportiva pode gerar advertência ou eliminação, a critério da organização.
+        </li>
+      </Lista>
     ),
   },
   {
     n: "08",
     title: "Queda de energia",
     body: (
-      <p>
-        Se a luz cair, a partida é reiniciada e joga-se apenas o tempo que faltava; se não lembrarem
-        o tempo exato, os dois combinam um tempo aproximado (ex.: caiu aos 70', joga-se os 25'
-        restantes); o tempo restante já considera os acréscimos, e a partida só termina quando a
-        bola sair de jogo.
-      </p>
+      <Lista>
+        <li>A partida é reiniciada e joga-se apenas o tempo que faltava.</li>
+        <li>
+          Sem lembrar o tempo exato, os dois combinam um aproximado — ex.: caiu aos 70’, jogam-se
+          os 25’ restantes.
+        </li>
+        <li>O tempo restante já considera os acréscimos.</li>
+        <li>
+          A partida só termina quando a <Chave>bola sair de jogo</Chave>.
+        </li>
+      </Lista>
     ),
   },
   {
     n: "09",
     title: "Organização",
     body: (
-      <p>
-        Casos omissos são resolvidos pela organização; a inscrição implica concordância com este
-        regulamento.
-      </p>
+      <Lista>
+        <li>Casos omissos são resolvidos pela organização.</li>
+        <li>A inscrição implica concordância com este regulamento.</li>
+      </Lista>
     ),
   },
   {
     n: "10",
     title: "Desistência / abandono",
+    wide: true,
     body: (
-      <p>
-        Se um participante desistir no meio do torneio, todos os jogos dele — já disputados ou não —
-        contam como W.O.: vitória por 3×0 para cada adversário, deixando todos em igualdade. Os gols
-        de W.O. não contam para a artilharia. No mata-mata, a desistência é W.O. e o adversário
-        avança.
-      </p>
+      <Lista>
+        <li>
+          Todos os jogos de quem desistir — <Chave>já disputados ou não</Chave> — viram vitória por
+          3×0 para cada adversário, deixando todos em igualdade.
+        </li>
+        <li>Os gols de W.O. não contam para a artilharia nem para a melhor defesa.</li>
+        <li>No mata-mata, a desistência é W.O. e o adversário avança.</li>
+      </Lista>
     ),
   },
   {
     n: "11",
     title: "Premiação",
+    wide: true,
     body: (
-      <ul className="list-none space-y-1">
-        <li>🥇 <span className="text-branco">1º lugar:</span> Troféu + Medalha de Campeão</li>
-        <li>🥈 <span className="text-branco">2º lugar:</span> Troféu + Medalha de Vice</li>
-        <li>🥉 <span className="text-branco">3º lugar:</span> Troféu</li>
-        <li>🔻 <span className="text-branco">Lanterna (último):</span> Medalha de Lanterna</li>
-        <li>🎖️ <span className="text-branco">Demais participantes:</span> Medalha de participação</li>
-        <li>⚽ <span className="text-branco">Artilheiro:</span> Medalha — quem fizer mais gols</li>
-        <li>🧤 <span className="text-branco">Melhor defesa:</span> Medalha — quem sofrer menos gols</li>
+      <ul className="grid gap-1.5 sm:grid-cols-2">
+        {[
+          ["🥇", "1º lugar", "Troféu + Medalha de Campeão"],
+          ["🥈", "2º lugar", "Troféu + Medalha de Vice"],
+          ["🥉", "3º lugar", "Troféu"],
+          ["🔻", "Lanterna (último)", "Medalha de Lanterna"],
+          ["⚽", "Artilheiro", "Medalha — quem fizer mais gols"],
+          ["🧤", "Melhor defesa", "Medalha — quem sofrer menos gols"],
+          ["🎖️", "Demais participantes", "Medalha de participação"],
+        ].map(([icone, quem, premio]) => (
+          <li
+            key={quem}
+            className="flex items-center gap-2.5 rounded-lg border border-line bg-white/[0.03] px-3 py-2"
+          >
+            <span className="text-lg leading-none">{icone}</span>
+            <span className="min-w-0">
+              <span className="block font-display text-[15px] uppercase tracking-wide text-branco">
+                {quem}
+              </span>
+              <span className="block text-xs text-ink-muted">{premio}</span>
+            </span>
+          </li>
+        ))}
       </ul>
     ),
   },
   {
     n: "12",
     title: "Artilheiro e melhor defesa",
+    wide: true,
     body: (
-      <p>
-        <span className="text-branco">Artilheiro</span> é quem marcar mais gols;{" "}
-        <span className="text-branco">melhor defesa</span>, quem sofrer menos. As duas contas
-        somam liga + mata-mata e <span className="text-branco">não contam gols de W.O. nem de
-        partida de desempate</span> — por isso a melhor defesa pode não bater com a coluna GC da
-        classificação, que soma tudo porque ali o W.O. vale pontos. Empate na artilharia: leva
-        quem fez os gols em menos jogos; na defesa, quem sofreu menos em mais jogos.
-      </p>
+      <>
+        <Lista>
+          <li>
+            <Chave>Artilheiro:</Chave> quem marcar mais gols. Empate → leva quem fez em menos jogos.
+          </li>
+          <li>
+            <Chave>Melhor defesa:</Chave> quem sofrer menos gols. Empate → leva quem sofreu menos em
+            mais jogos.
+          </li>
+          <li>
+            As duas contas somam <Chave>liga + mata-mata</Chave> e não contam gols de{" "}
+            <Chave>W.O.</Chave> nem de <Chave>partida de desempate</Chave>.
+          </li>
+        </Lista>
+        <p className="mt-2 text-xs text-ink-muted">
+          Por isso a melhor defesa pode não bater com a coluna “Gols” da classificação, que soma
+          tudo — lá o W.O. precisa valer, porque decide pontos.
+        </p>
+      </>
     ),
   },
 ];
@@ -175,14 +296,21 @@ export default function RegulamentoPage() {
         <p className="mt-2 text-sm text-ink-muted">⏱️ {EVENT.note}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid items-start gap-3 sm:grid-cols-2">
         {RULES.map((r) => (
-          <section key={r.n} className="panel p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="font-display text-2xl text-gremio">{r.n}</span>
-              <h2 className="font-display text-xl tracking-wide text-ink">{r.title}</h2>
+          <section
+            key={r.n}
+            className={`panel p-4 ${r.wide ? "sm:col-span-2" : ""}`}
+          >
+            <div className="mb-3 flex items-center gap-2.5 border-b border-line pb-2">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gremio/15 font-display text-xl text-gremio">
+                {r.n}
+              </span>
+              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-ink">
+                {r.title}
+              </h2>
             </div>
-            <div className="text-sm leading-relaxed text-ink-muted">{r.body}</div>
+            <div className="text-sm text-ink-muted">{r.body}</div>
           </section>
         ))}
       </div>

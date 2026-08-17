@@ -29,8 +29,8 @@ export default function ClassificacaoPage() {
               <span className="mr-1 inline-block h-2 w-2 rounded-full bg-cyan align-middle" />
               Zona de classificação (Top 6) · 1º e 2º vão direto à semifinal
             </span>
-            <span>P pontos · J jogos · V vitórias · E empates · D derrotas</span>
-            <span>GP gols marcados · GC gols sofridos · SG saldo · % aproveitamento</span>
+            <span>PJ jogos · V vitórias · E empates · D derrotas · Pts pontos</span>
+            <span>Gols = marcados : sofridos (o saldo sai daí — é o 3º critério de desempate)</span>
           </p>
         </>
       )}

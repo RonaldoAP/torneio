@@ -1,6 +1,5 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
 import type { Match, Player, Slot } from "@/lib/types";
 import { matchWinner, matchLoser } from "@/lib/standings";
 import { championAndRunnerUp, thirdPlace } from "@/lib/bracket";
@@ -8,246 +7,351 @@ import { Avatar } from "@/components/ui";
 import { MatchRow } from "@/components/MatchRow";
 
 /* ------------------------------------------------------------------ *
- * Card compacto (duas linhas) usado no organograma do telão/desktop. *
+ * Chaveamento no estilo dos infográficos de Champions: a FOTO de cada
+ * participante faz as vezes de escudo, o nome vai embaixo em caixa alta,
+ * e as linhas finas levam ao círculo da fase seguinte — que começa vazio
+ * e vai sendo preenchido por quem avança, até o troféu no centro.
+ *
+ * A geometria é fixa (percentuais no eixo X, múltiplos da altura de linha
+ * no eixo Y), então nada depende de medir o DOM: no telão, que fica horas
+ * ligado e às vezes só recebe resize, isso é o que garante que as linhas
+ * nunca saiam do lugar.
  * ------------------------------------------------------------------ */
-function TreeSide({
+
+type Side = "left" | "right";
+
+/** Colunas em % da largura (lado esquerdo; o direito é espelhado por 100-x). */
+const X = {
+  crest: 8.5, // centro do escudo
+  crestEdge: 17, // onde a linha encosta no escudo
+  joinRep: 27, // vertical que junta a dupla da repescagem
+  repCrest: 34.5, // círculo do vencedor da repescagem
+  repEdge: 41.5, // borda desse círculo
+  joinSemi: 44, // vertical que junta rep + cabeça de chave
+  finalist: 47, // círculo do finalista (vencedor da semi)
+  finalEdge: 44.8, // onde a linha da semi encosta no finalista
+};
+
+const mirror = (x: number) => 100 - x;
+
+function Crest({
   player,
   goals,
-  isWinner,
-  isLoser,
-  isPenWinner,
   seed,
+  state = "idle",
+  isPenWinner,
+  size,
+  placeholder = "A definir",
 }: {
   player?: Player;
-  goals: number | null;
-  isWinner: boolean;
-  isLoser: boolean;
-  isPenWinner: boolean;
+  goals?: number | null;
   seed?: string;
+  state?: "winner" | "loser" | "idle";
+  isPenWinner?: boolean;
+  size: number;
+  placeholder?: string;
 }) {
-  return (
-    <div className="flex items-center gap-2 px-2.5 py-2">
-      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${isWinner ? "bg-emerald-400" : "bg-transparent"}`} />
-      {seed && (
-        <span className="shrink-0 rounded bg-white/[0.06] px-1.5 text-[9px] font-bold text-ink-muted">{seed}</span>
-      )}
-      <Avatar name={player?.name ?? "?"} photo={player?.photo} size={24} />
-      <span
-        className={`flex-1 truncate text-[13px] font-semibold ${
-          !player
-            ? "italic text-ink-muted/50"
-            : isWinner
-              ? "text-emerald-400"
-              : isLoser
-                ? "text-ink-muted"
-                : "text-ink"
-        }`}
-      >
-        {player?.name ?? "Aguardando…"}
-      </span>
-      {isPenWinner && <span className="shrink-0 rounded border border-cyan px-1 text-[9px] font-bold text-cyan">pên</span>}
-      <span
-        className={`min-w-[16px] text-center font-display text-[15px] tabular-nums ${
-          isWinner ? "text-emerald-400" : isLoser ? "text-ink-muted" : "text-ink"
-        }`}
-      >
-        {goals ?? "–"}
-      </span>
-    </div>
-  );
-}
-
-function TreeCard({
-  match,
-  byId,
-  caption,
-  seedHome,
-  seedAway,
-  variant = "default",
-  cardRef,
-}: {
-  match?: Match;
-  byId: Map<string, Player>;
-  caption: string;
-  seedHome?: string;
-  seedAway?: string;
-  variant?: "default" | "final" | "third";
-  cardRef?: React.Ref<HTMLDivElement>;
-}) {
-  const home = match?.home_id ? byId.get(match.home_id) : undefined;
-  const away = match?.away_id ? byId.get(match.away_id) : undefined;
-  const winner = match ? matchWinner(match) : null;
-  const loser = match ? matchLoser(match) : null;
-  const played = match != null && match.home_goals != null && match.away_goals != null;
-  const tie = played && match!.home_goals === match!.away_goals;
-  const bothSet = !!match?.home_id && !!match?.away_id;
-  const liveNext = bothSet && !played;
-
-  const border =
-    variant === "final" ? "border-cyan/45" : liveNext ? "border-gremio/50" : "border-line";
-  const glow = variant === "final" ? "shadow-[0_0_40px_rgba(59,91,255,0.30)]" : "shadow-[0_10px_30px_rgba(2,6,30,0.45)]";
-  const width = variant === "default" ? "" : "w-[210px]";
+  const ring =
+    state === "winner"
+      ? "ring-2 ring-emerald-400 shadow-[0_0_26px_rgba(52,211,153,0.35)]"
+      : player
+        ? "ring-1 ring-white/15"
+        : "ring-1 ring-dashed ring-white/15";
 
   return (
-    <div ref={cardRef} className={`relative z-10 rounded-xl border bg-base/85 ${border} ${glow} ${width} ${liveNext ? "animate-pulseAzul" : ""}`}>
-      <div className="flex items-center justify-between border-b border-line px-2.5 py-1.5">
-        <span className={`font-display text-[10px] uppercase tracking-[0.14em] ${variant === "final" ? "text-cyan" : "text-ink-muted"}`}>
-          {caption}
-        </span>
-        {match && (
-          <span className={`text-[8.5px] font-semibold uppercase tracking-wide ${played ? "text-cyan" : liveNext ? "text-branco" : "text-ink-muted/50"}`}>
-            {played ? "fim" : liveNext ? "a jogar" : "aguard."}
+    <div className={`flex flex-col items-center ${state === "loser" ? "opacity-45" : ""}`}>
+      <div className="relative">
+        <div className={`overflow-hidden rounded-full bg-panel ${ring}`}>
+          {player ? (
+            <Avatar name={player.name} photo={player.photo} size={size} />
+          ) : (
+            <div
+              className="grid place-items-center font-display text-ink-muted/50"
+              style={{ width: size, height: size, fontSize: size * 0.5 }}
+            >
+              ?
+            </div>
+          )}
+        </div>
+        {goals != null && (
+          <span
+            className={`absolute -bottom-1 -right-1 grid place-items-center rounded-full border border-base font-display tabular leading-none ${
+              state === "winner" ? "bg-emerald-400 text-base" : "bg-panel-light text-ink"
+            }`}
+            style={{
+              minWidth: size * 0.42,
+              height: size * 0.42,
+              fontSize: size * 0.28,
+              paddingInline: size * 0.08,
+            }}
+          >
+            {goals}
+          </span>
+        )}
+        {isPenWinner && (
+          <span className="absolute -top-1 -right-1 rounded-full bg-cyan px-1 font-display text-[9px] font-bold leading-tight text-base">
+            pên
           </span>
         )}
       </div>
-      <div className="divide-y divide-line/60">
-        <TreeSide
-          player={home}
-          goals={match?.home_goals ?? null}
-          isWinner={!!winner && winner === match?.home_id}
-          isLoser={!!loser && loser === match?.home_id}
-          isPenWinner={tie && match?.pen_winner_id === match?.home_id && match?.home_id != null}
-          seed={seedHome}
-        />
-        <TreeSide
-          player={away}
-          goals={match?.away_goals ?? null}
-          isWinner={!!winner && winner === match?.away_id}
-          isLoser={!!loser && loser === match?.away_id}
-          isPenWinner={tie && match?.pen_winner_id === match?.away_id && match?.away_id != null}
-          seed={seedAway}
-        />
-      </div>
+
+      {seed && (
+        <span className="mt-2 rounded-full border border-cyan/40 bg-cyan/10 px-2 py-0.5 font-display text-[12px] font-bold uppercase leading-none tracking-[0.12em] text-cyan">
+          {seed}
+        </span>
+      )}
+      <span
+        className={`mt-0.5 max-w-full truncate px-1 text-center font-display font-bold uppercase leading-tight tracking-wide ${
+          state === "winner" ? "text-branco" : player ? "text-ink" : "text-ink-muted/60"
+        }`}
+        style={{ fontSize: size * 0.3 }}
+      >
+        {player?.name ?? placeholder}
+      </span>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ *
- * Bracket: organograma no telão/desktop, fases empilhadas no celular *
- * ------------------------------------------------------------------ */
-export function Bracket({ players, matches }: { players: Player[]; matches: Match[] }) {
+/** Um lado de uma partida, já resolvido em estado visual. */
+function sideOf(match: Match | undefined, which: "home" | "away") {
+  const id = match?.[`${which}_id`] ?? null;
+  const winner = match ? matchWinner(match) : null;
+  const loser = match ? matchLoser(match) : null;
+  const played = match?.home_goals != null && match?.away_goals != null;
+  const tie = played && match!.home_goals === match!.away_goals;
+  return {
+    id,
+    goals: match?.[`${which}_goals`] ?? null,
+    state: (winner && winner === id ? "winner" : loser && loser === id ? "loser" : "idle") as
+      | "winner"
+      | "loser"
+      | "idle",
+    isPenWinner: !!tie && !!id && match?.pen_winner_id === id,
+  };
+}
+
+export function Bracket({
+  players,
+  matches,
+  big = false,
+}: {
+  players: Player[];
+  matches: Match[];
+  big?: boolean;
+}) {
   const byId = new Map(players.map((p) => [p.id, p] as const));
-  const name = (id: string | null) => (id ? byId.get(id)?.name ?? "?" : null);
+  const get = (id: string | null | undefined) => (id ? byId.get(id) : undefined);
   const bySlot = (s: Slot) => matches.find((m) => m.slot === s);
   const { championId, runnerUpId } = championAndRunnerUp(matches);
   const third = thirdPlace(matches);
 
-  // ---- conectores do organograma (SVG desenhado sobre as posições reais) ----
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const repARef = useRef<HTMLDivElement>(null);
-  const sfARef = useRef<HTMLDivElement>(null);
-  const sfBRef = useRef<HTMLDivElement>(null);
-  const repBRef = useRef<HTMLDivElement>(null);
-  const finRef = useRef<HTMLDivElement>(null);
-  const [lines, setLines] = useState<{ d: string; g: string }[]>([]);
-  const [dims, setDims] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  // Geometria: 3 linhas por lado (dupla da repescagem + cabeça de chave).
+  const ROW = big ? 172 : 132;
+  const H = ROW * 3;
+  const yTop = ROW * 0.5;
+  const yMid = ROW * 1.5;
+  const yBottom = ROW * 2.5;
+  const yRep = (yTop + yMid) / 2; // vencedor da repescagem
+  const ySemi = (yRep + yBottom) / 2; // vencedor da semi (e altura da final)
 
-  useLayoutEffect(() => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const compute = () => {
-      const els = [repARef, sfARef, sfBRef, repBRef, finRef].map((r) => r.current);
-      if (els.some((e) => !e)) return;
-      const r0 = wrap.getBoundingClientRect();
-      if (r0.width === 0) return; // escondido (mobile) → não desenha
-      const box = (el: HTMLDivElement) => {
-        const r = el.getBoundingClientRect();
-        return { l: r.left - r0.left, r: r.right - r0.left, cy: (r.top + r.bottom) / 2 - r0.top };
-      };
-      const [a, b, c, d, f] = els.map((e) => box(e!));
-      const eR = (x: typeof a, y: typeof a) => {
-        const mx = (x.r + y.l) / 2;
-        return `M ${x.r} ${x.cy} H ${mx} V ${y.cy} H ${y.l}`;
-      };
-      const eL = (x: typeof a, y: typeof a) => {
-        const mx = (x.l + y.r) / 2;
-        return `M ${x.l} ${x.cy} H ${mx} V ${y.cy} H ${y.r}`;
-      };
-      setDims({ w: r0.width, h: r0.height });
-      setLines([
-        { d: eR(a, b), g: "gL" }, // REP_A → SF_A
-        { d: eR(b, f), g: "gL" }, // SF_A → FINAL
-        { d: eL(d, c), g: "gR" }, // REP_B → SF_B
-        { d: eL(c, f), g: "gR" }, // SF_B → FINAL
-      ]);
-    };
-    compute();
-    const ro = new ResizeObserver(compute);
-    ro.observe(wrap);
-    window.addEventListener("resize", compute);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", compute);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(matches.map((m) => [m.slot, m.home_id, m.away_id, m.home_goals, m.away_goals]))]);
+  const crestSize = big ? 84 : 62;
+  const nodeSize = big ? 76 : 56;
 
-  const Trophy = ({ big }: { big?: boolean }) => (
-    <div className={`select-none leading-none animate-floatY motion-reduce:animate-none ${big ? "text-6xl" : "text-5xl"}`} style={{ filter: "drop-shadow(0 8px 26px rgba(37,228,255,0.55))" }}>
-      🏆
-    </div>
-  );
+  /** Traços de um lado: dupla → repescagem → semi → final. */
+  const strokes = (side: Side) => {
+    const x = (v: number) => (side === "left" ? v : mirror(v));
+    return [
+      // dupla da repescagem se encontra
+      `M ${x(X.crestEdge)} ${yTop} H ${x(X.joinRep)} V ${yMid} H ${x(X.crestEdge)}`,
+      `M ${x(X.joinRep)} ${yRep} H ${x(X.repCrest - 6)}`,
+      // vencedor da repescagem encontra a cabeça de chave
+      `M ${x(X.repEdge)} ${yRep} H ${x(X.joinSemi)} V ${yBottom} H ${x(X.crestEdge)}`,
+      // semi → final
+      `M ${x(X.joinSemi)} ${ySemi} H ${x(X.finalEdge)}`,
+    ];
+  };
+
+  const finalM = bySlot("FINAL");
+  const finalHome = sideOf(finalM, "home");
+  const finalAway = sideOf(finalM, "away");
+
+  /** Um lado inteiro da chave (esquerda = REP_A/SF_A; direita = REP_B/SF_B). */
+  function HalfTree({ side }: { side: Side }) {
+    const repSlot: Slot = side === "left" ? "REP_A" : "REP_B";
+    const sfSlot: Slot = side === "left" ? "SF_A" : "SF_B";
+    const rep = bySlot(repSlot);
+    const sf = bySlot(sfSlot);
+    const seeds = side === "left" ? { top: "4º", mid: "5º", head: "1º" } : { top: "3º", mid: "6º", head: "2º" };
+
+    const repHome = sideOf(rep, "home");
+    const repAway = sideOf(rep, "away");
+    // Na semi a cabeça de chave é sempre o mandante; o visitante é quem subiu.
+    const sfHead = sideOf(sf, "home");
+    const sfRisen = sideOf(sf, "away");
+
+    const x = (v: number) => (side === "left" ? v : mirror(v));
+    const at = (xPct: number, y: number, w: number) => ({
+      position: "absolute" as const,
+      left: `${xPct}%`,
+      top: y,
+      width: w,
+      transform: "translate(-50%, -50%)",
+    });
+
+    return (
+      <>
+        <div style={at(x(X.crest), yTop, crestSize * 1.9)}>
+          <Crest
+            player={get(repHome.id)}
+            goals={repHome.goals}
+            seed={seeds.top}
+            state={repHome.state}
+            isPenWinner={repHome.isPenWinner}
+            size={crestSize}
+          />
+        </div>
+        <div style={at(x(X.crest), yMid, crestSize * 1.9)}>
+          <Crest
+            player={get(repAway.id)}
+            goals={repAway.goals}
+            seed={seeds.mid}
+            state={repAway.state}
+            isPenWinner={repAway.isPenWinner}
+            size={crestSize}
+          />
+        </div>
+        <div style={at(x(X.crest), yBottom, crestSize * 1.9)}>
+          <Crest
+            player={get(sfHead.id)}
+            goals={sfHead.goals}
+            seed={seeds.head}
+            state={sfHead.state}
+            isPenWinner={sfHead.isPenWinner}
+            size={crestSize}
+          />
+        </div>
+
+        {/* círculo do vencedor da repescagem — entra na semi */}
+        <div style={at(x(X.repCrest), yRep, nodeSize * 1.9)}>
+          <Crest
+            player={get(sfRisen.id)}
+            goals={sfRisen.goals}
+            state={sfRisen.state}
+            isPenWinner={sfRisen.isPenWinner}
+            size={nodeSize}
+            placeholder="Repescagem"
+          />
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="space-y-5">
       {/* ================= TELÃO / DESKTOP: organograma ================= */}
-      <div ref={wrapRef} className="relative hidden md:block">
+      <div className="relative hidden md:block" style={{ height: H }}>
         <svg
-          className="pointer-events-none absolute inset-0 z-0"
-          width={dims.w}
-          height={dims.h}
-          viewBox={`0 0 ${dims.w} ${dims.h}`}
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox={`0 0 100 ${H}`}
           preserveAspectRatio="none"
         >
-          <defs>
-            <linearGradient id="gL" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="rgba(143,160,208,0.35)" />
-              <stop offset="1" stopColor="rgba(37,228,255,0.75)" />
-            </linearGradient>
-            <linearGradient id="gR" x1="1" y1="0" x2="0" y2="0">
-              <stop offset="0" stopColor="rgba(143,160,208,0.35)" />
-              <stop offset="1" stopColor="rgba(37,228,255,0.75)" />
-            </linearGradient>
-          </defs>
-          {lines.map((l, i) => (
-            <path key={i} d={l.d} fill="none" stroke={`url(#${l.g})`} strokeWidth={2} strokeLinecap="round" />
+          {[...strokes("left"), ...strokes("right")].map((d, i) => (
+            <path
+              key={i}
+              d={d}
+              fill="none"
+              stroke="rgba(234,240,255,0.35)"
+              strokeWidth={1.5}
+              vectorEffect="non-scaling-stroke"
+            />
           ))}
         </svg>
 
-        <div className="relative z-10 grid grid-cols-[1fr_1fr_1.15fr_1fr_1fr] items-center gap-x-2.5">
-          {/* col 1 — repescagem esquerda */}
-          <div className="flex flex-col justify-start pt-2">
-            <TreeCard match={bySlot("REP_A")} byId={byId} caption="Repescagem · 4º×5º" cardRef={repARef} />
+        <HalfTree side="left" />
+        <HalfTree side="right" />
+
+        {/* centro: troféu acima, finalistas nos círculos que recebem as linhas */}
+        <div
+          className="absolute flex flex-col items-center"
+          style={{
+            left: "50%",
+            top: ySemi - nodeSize * 0.85,
+            width: big ? 340 : 260,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          <div className="mb-1 font-display text-[12px] font-bold uppercase tracking-[0.34em] text-cyan">
+            {championId ? "Campeão" : "Final"}
           </div>
-          {/* col 2 — semi esquerda */}
-          <div className="flex flex-col justify-center">
-            <TreeCard match={bySlot("SF_A")} byId={byId} caption="Semi A · 1º × venc." seedHome="1º" cardRef={sfARef} />
+          <div
+            className="animate-floatY select-none leading-none motion-reduce:animate-none"
+            style={{ fontSize: big ? 62 : 44, filter: "drop-shadow(0 8px 26px rgba(37,228,255,0.55))" }}
+          >
+            🏆
           </div>
-          {/* col 3 — centro / troféu */}
-          <div className="flex flex-col items-center justify-center gap-3">
-            <div className="text-center font-display text-[10px] font-bold uppercase tracking-[0.3em] text-cyan">
-              {championId ? "Campeão" : "Final"}
-            </div>
-            <Trophy big />
-            {championId && <div className="text-center font-display text-xl font-extrabold text-branco">{name(championId)}</div>}
-            <TreeCard match={bySlot("TERCEIRO")} byId={byId} caption="3º lugar · 1º a decidir" variant="third" />
-            <TreeCard match={bySlot("FINAL")} byId={byId} caption="Final" variant="final" cardRef={finRef} />
-          </div>
-          {/* col 4 — semi direita */}
-          <div className="flex flex-col justify-center">
-            <TreeCard match={bySlot("SF_B")} byId={byId} caption="Semi B · 2º × venc." seedHome="2º" cardRef={sfBRef} />
-          </div>
-          {/* col 5 — repescagem direita */}
-          <div className="flex flex-col justify-start pt-2">
-            <TreeCard match={bySlot("REP_B")} byId={byId} caption="Repescagem · 3º×6º" cardRef={repBRef} />
-          </div>
+          {championId && (
+            <>
+              <div
+                className="mt-1 max-w-full truncate text-center font-display font-black uppercase tracking-wide text-branco"
+                style={{ fontSize: big ? 44 : 32 }}
+              >
+                {get(championId)?.name}
+              </div>
+              {runnerUpId && (
+                <div className="font-display text-sm uppercase tracking-widest text-ink-muted">
+                  vice: {get(runnerUpId)?.name}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-ink-muted">
-          1º e 2º entram direto na semifinal · empate no mata-mata → prorrogação → pênaltis. A chave avança sozinha a
-          cada placar lançado.
-        </p>
+        {/* os dois finalistas — é neles que as linhas das semis terminam */}
+        <div
+          className="absolute"
+          style={{
+            left: `${X.finalist}%`,
+            top: ySemi,
+            width: nodeSize * 1.9,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <Crest
+            player={get(finalHome.id)}
+            goals={finalHome.goals}
+            state={finalHome.state}
+            isPenWinner={finalHome.isPenWinner}
+            size={nodeSize}
+            placeholder="Semi A"
+          />
+        </div>
+        <div
+          className="absolute"
+          style={{
+            left: `${mirror(X.finalist)}%`,
+            top: ySemi,
+            width: nodeSize * 1.9,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <Crest
+            player={get(finalAway.id)}
+            goals={finalAway.goals}
+            state={finalAway.state}
+            isPenWinner={finalAway.isPenWinner}
+            size={nodeSize}
+            placeholder="Semi B"
+          />
+        </div>
       </div>
+
+      {/* 3º lugar: fora da árvore, porque é decidido antes da final */}
+      <ThirdPlaceStrip match={bySlot("TERCEIRO")} byId={byId} third={third} big={big} />
+
+      <p className="hidden text-center text-xs text-ink-muted md:block">
+        1º e 2º entram direto na semifinal · empate no mata-mata → prorrogação → pênaltis. A chave
+        avança sozinha a cada placar lançado.
+      </p>
 
       {/* ================= CELULAR: fases empilhadas ================= */}
       <div className="space-y-4 md:hidden">
@@ -256,11 +360,19 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
             className="panel flex flex-col items-center gap-1 p-5 text-center"
             style={{ borderColor: "rgba(37,228,255,0.5)", boxShadow: "0 0 40px rgba(59,91,255,0.28)" }}
           >
-            <div className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-cyan">Campeão</div>
-            <Trophy />
-            <div className="font-display text-2xl font-extrabold text-branco">{name(championId)}</div>
-            {runnerUpId && <div className="text-xs text-ink-muted">Vice: {name(runnerUpId)}</div>}
-            {third && <div className="text-xs text-ink-muted">3º: {name(third)}</div>}
+            <div className="font-display text-[10px] font-bold uppercase tracking-[0.3em] text-cyan">
+              Campeão
+            </div>
+            <div className="animate-floatY select-none text-5xl leading-none motion-reduce:animate-none">
+              🏆
+            </div>
+            <div className="font-display text-3xl font-black uppercase text-branco">
+              {get(championId)?.name}
+            </div>
+            {runnerUpId && (
+              <div className="text-xs text-ink-muted">Vice: {get(runnerUpId)?.name}</div>
+            )}
+            {third && <div className="text-xs text-ink-muted">3º: {get(third)?.name}</div>}
           </div>
         )}
 
@@ -290,6 +402,55 @@ export function Bracket({ players, matches }: { players: Player[]; matches: Matc
   );
 }
 
+function ThirdPlaceStrip({
+  match,
+  byId,
+  third,
+  big,
+}: {
+  match?: Match;
+  byId: Map<string, Player>;
+  third: string | null;
+  big: boolean;
+}) {
+  const home = sideOf(match, "home");
+  const away = sideOf(match, "away");
+  const get = (id: string | null) => (id ? byId.get(id) : undefined);
+  const size = big ? 48 : 38;
+
+  return (
+    <div className="hidden justify-center md:flex">
+      <div className="panel flex items-center gap-4 px-5 py-3">
+        <span className="font-display text-[11px] font-bold uppercase tracking-[0.3em] text-ink-muted">
+          🥉 3º lugar
+        </span>
+        <Crest
+          player={get(home.id)}
+          goals={home.goals}
+          state={home.state}
+          isPenWinner={home.isPenWinner}
+          size={size}
+          placeholder="Perd. Semi A"
+        />
+        <span className="font-display text-ink-muted">×</span>
+        <Crest
+          player={get(away.id)}
+          goals={away.goals}
+          state={away.state}
+          isPenWinner={away.isPenWinner}
+          size={size}
+          placeholder="Perd. Semi B"
+        />
+        {third && (
+          <span className="font-display text-sm uppercase tracking-widest text-ink">
+            {get(third)?.name}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MobilePhase({
   title,
   note,
@@ -304,8 +465,18 @@ function MobilePhase({
   return (
     <section>
       <div className="mb-2 flex items-center justify-between px-1">
-        <h3 className={`font-display text-sm uppercase tracking-[0.15em] ${accent ? "text-cyan" : "text-ink"}`}>{title}</h3>
-        {note && <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">{note}</span>}
+        <h3
+          className={`font-display text-lg font-bold uppercase tracking-[0.15em] ${
+            accent ? "text-cyan" : "text-ink"
+          }`}
+        >
+          {title}
+        </h3>
+        {note && (
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+            {note}
+          </span>
+        )}
       </div>
       <div className="panel divide-y divide-line/60">{children}</div>
     </section>

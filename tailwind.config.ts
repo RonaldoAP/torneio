@@ -29,7 +29,9 @@ const config: Config = {
         line: "rgba(255,255,255,0.06)",
       },
       fontFamily: {
-        display: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        // display = títulos, nomes de participantes, placares e tabelas
+        display: ["var(--font-sofia)", "var(--font-manrope)", "system-ui", "sans-serif"],
+        // sans = texto de corpo e explicações
         sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
       borderRadius: {

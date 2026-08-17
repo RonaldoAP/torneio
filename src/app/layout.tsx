@@ -1,12 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Sofia_Sans_Extra_Condensed } from "next/font/google";
 import "./globals.css";
 import { TabBar } from "@/components/TabBar";
 
+// Manrope = texto de corpo (explicações, regulamento).
 const manrope = Manrope({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-manrope",
+  display: "swap",
+});
+
+// Sofia Sans Extra Condensed = títulos, nomes, placares e tabelas.
+// Condensada: cabe nome grande na TV sem quebrar linha.
+const sofia = Sofia_Sans_Extra_Condensed({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  variable: "--font-sofia",
   display: "swap",
 });
 
@@ -23,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={manrope.variable}>
+    <html lang="pt-BR" className={`${manrope.variable} ${sofia.variable}`}>
       <body className="font-sans antialiased">
         <TabBar />
         <main className="mx-auto w-full max-w-5xl px-3 pb-24 pt-4 sm:px-4">{children}</main>
