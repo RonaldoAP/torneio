@@ -36,9 +36,22 @@ export function MatchRow({
     ((awayGoals as number) > (homeGoals as number) || (tie && !!penWinnerId && penWinnerId === away?.id));
   const bothPresent = !!home && !!away;
 
+  // No telão o avatar vem grande (56px); nome e placar acompanham a escala,
+  // senão não se lê de longe.
+  const grande = avatarSize >= 48;
+  const nameSize = grande ? "text-3xl sm:text-4xl" : "text-lg sm:text-xl";
+  const scoreSize = grande ? "text-5xl sm:text-6xl" : "text-3xl";
+
+  // Nome de participante é "nome de time": fonte display (Sofia, caixa alta).
   const nameCls = (win: boolean, lose: boolean, present: boolean) =>
-    `truncate ${
-      !present ? "italic text-ink-muted/50" : win ? "font-semibold text-emerald-400" : lose ? "text-danger" : "text-ink"
+    `truncate font-display tracking-wide ${nameSize} ${
+      !present
+        ? "text-ink-muted/50"
+        : win
+          ? "text-emerald-400"
+          : lose
+            ? "text-danger"
+            : "text-ink"
     }`;
   const scoreCls = (win: boolean, lose: boolean) =>
     win ? "text-emerald-400" : lose ? "text-danger" : "text-white";
@@ -54,14 +67,14 @@ export function MatchRow({
         {/* mandante: nome + foto */}
         <div className="flex min-w-0 items-center justify-end gap-2.5">
           {tie && penWinnerId === home?.id && <span className="text-[10px] font-semibold text-cyan">pên</span>}
-          <span className={nameCls(homeWin, awayWin, !!home)}>{home?.name ?? "Aguardando…"}</span>
+          <span className={nameCls(homeWin, awayWin, !!home)}>{home?.name ?? "Aguardando"}</span>
           <Avatar name={home?.name ?? "?"} photo={home?.photo} size={avatarSize} />
         </div>
 
         {/* placar */}
         <div className="min-w-[68px] text-center">
           {played ? (
-            <span className="font-display text-2xl leading-none tracking-tight">
+            <span className={`font-display leading-none tracking-tight ${scoreSize}`}>
               <span className={scoreCls(homeWin, awayWin)}>{homeGoals}</span>
               <span className="mx-1 text-ink-muted/60">×</span>
               <span className={scoreCls(awayWin, homeWin)}>{awayGoals}</span>
@@ -78,7 +91,7 @@ export function MatchRow({
         {/* visitante: foto + nome */}
         <div className="flex min-w-0 items-center gap-2.5">
           <Avatar name={away?.name ?? "?"} photo={away?.photo} size={avatarSize} />
-          <span className={nameCls(awayWin, homeWin, !!away)}>{away?.name ?? "Aguardando…"}</span>
+          <span className={nameCls(awayWin, homeWin, !!away)}>{away?.name ?? "Aguardando"}</span>
           {tie && penWinnerId === away?.id && <span className="text-[10px] font-semibold text-cyan">pên</span>}
         </div>
       </div>

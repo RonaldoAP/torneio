@@ -423,5 +423,10 @@ Mosquito. Os outros 8 jogos do Mosquito continuam perdidos.
 - Pra testar visual sem afetar produção: rode local (`npm run dev`) — sem envs de
   Supabase ele usa o modo local com jogadores semente.
 - O tema, cores e animações estão em `tailwind.config.ts` e `globals.css`.
+- **Tipografia (regra da casa):** `font-display` = **Sofia Sans Extra Condensed**,
+  sempre em **CAIXA ALTA** — títulos, nomes de participantes, placares e tabelas.
+  O `text-transform: uppercase` está uma vez só, na regra `.font-display` do
+  `globals.css`, para que qualquer texto novo nessa fonte já nasça certo. Texto de
+  corpo e explicações usam `font-sans` (**Manrope**), em caixa normal.
 
 Boa sorte — e que o Léo comemore o título de artilheiro. 🏆

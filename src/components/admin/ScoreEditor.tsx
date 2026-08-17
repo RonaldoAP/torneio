@@ -63,7 +63,7 @@ export function ScoreEditor({
   return (
     <div className="rounded-xl border border-line bg-base/40 p-3">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <span className="truncate text-right text-sm text-ink">{name(match.home_id)}</span>
+        <span className="truncate text-right font-display text-lg tracking-wide text-ink">{name(match.home_id)}</span>
         <div className="flex items-center gap-1">
           <input
             aria-label={`Gols ${name(match.home_id)}`}
@@ -83,7 +83,7 @@ export function ScoreEditor({
             onChange={(e) => setAway(e.target.value.replace(/[^0-9]/g, ""))}
           />
         </div>
-        <span className="truncate text-left text-sm text-ink">{name(match.away_id)}</span>
+        <span className="truncate text-left font-display text-lg tracking-wide text-ink">{name(match.away_id)}</span>
       </div>
 
       {needsPen && (

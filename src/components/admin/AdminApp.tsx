@@ -487,7 +487,7 @@ export function AdminApp({ slug }: { slug?: string }) {
             <li key={p.id} className="flex items-center gap-3 rounded-lg border border-line bg-base/40 px-3 py-2">
               <span className="w-4 shrink-0 text-center text-ink-muted">{i + 1}</span>
               <Avatar name={p.name} photo={p.photo} size={40} />
-              <span className="min-w-0 flex-1 truncate">{p.name}</span>
+              <span className="min-w-0 flex-1 truncate font-display text-xl tracking-wide">{p.name}</span>
               <label className="btn-ghost cursor-pointer px-2 py-1 text-xs" title="Enviar/trocar foto">
                 {p.photo ? "Trocar foto" : "Foto"}
                 <input

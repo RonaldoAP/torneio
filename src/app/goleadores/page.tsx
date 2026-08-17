@@ -55,7 +55,7 @@ export default function GoleadoresPage() {
                   <td className="px-3 py-3.5 text-left">
                     <span className="flex items-center gap-2.5">
                       <Avatar name={r.name} photo={photoById.get(r.playerId)} size={30} />
-                      <span className="truncate font-semibold text-ink">{r.name}</span>
+                      <span className="truncate font-display text-xl tracking-wide text-ink">{r.name}</span>
                       {i === 0 && (
                         <span className="chip border-gremio/50 text-gremio" title="Artilheiro">
                           ⚽
@@ -112,7 +112,7 @@ export default function GoleadoresPage() {
                       <td className="px-3 py-3.5 text-left">
                         <span className="flex items-center gap-2.5">
                           <Avatar name={r.name} photo={photoById.get(r.playerId)} size={30} />
-                          <span className="truncate font-semibold text-ink">{r.name}</span>
+                          <span className="truncate font-display text-xl tracking-wide text-ink">{r.name}</span>
                           {i === 0 && (
                             <span className="chip border-cyan/50 text-cyan" title="Melhor defesa">
                               🧤

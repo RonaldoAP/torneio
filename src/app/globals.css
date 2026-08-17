@@ -30,6 +30,11 @@ body {
   }
   .font-display {
     font-weight: 800;
+    /* A Sofia Sans Extra Condensed é usada sempre em caixa alta — regra do
+       organizador. Fica aqui, e não espalhada em cada componente, para que
+       qualquer texto novo que use a fonte já nasça certo. Texto de corpo
+       (Manrope, .font-sans) não é afetado. */
+    text-transform: uppercase;
   }
   /* algarismos tabulares nas tabelas e placares */
   table,

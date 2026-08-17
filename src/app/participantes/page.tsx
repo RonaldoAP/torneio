@@ -29,7 +29,7 @@ export default function ParticipantesPage() {
                 {i + 1}
               </span>
               <Avatar name={p.name} photo={p.photo} size={44} />
-              <span className="truncate text-lg text-ink">{p.name}</span>
+              <span className="truncate font-display text-2xl tracking-wide text-ink">{p.name}</span>
             </li>
           ))}
         </ol>

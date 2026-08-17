@@ -150,7 +150,7 @@ export default function EdicaoArquivadaPage({ params }: { params: { edicao: stri
                               photo={players.find((p) => p.id === r.playerId)?.photo}
                               size={28}
                             />
-                            <span className="truncate font-semibold text-ink">{r.name}</span>
+                            <span className="truncate font-display text-xl tracking-wide text-ink">{r.name}</span>
                           </span>
                         </td>
                         <td className="px-3 py-3 text-center tabular text-ink-muted">{r.games}</td>
