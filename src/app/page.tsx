@@ -275,24 +275,12 @@ export default function RegulamentoPage() {
     return () => window.removeEventListener("beforeprint", abrirTudo);
   }, []);
 
-  function imprimir() {
-    document.querySelectorAll("details").forEach((d) => d.setAttribute("open", ""));
-    window.print();
-  }
-
   return (
     <div className="animate-reveal">
       <PageHeader
         title={loading ? "Regulamento" : config.tournament_name}
         subtitle={`Regulamento oficial · ${editionLabel(edition)}`}
-        right={
-          <div className="flex items-center gap-2 no-print">
-            <LiveBadge mode={mode} connected={connected} />
-            <button className="btn-ghost" onClick={imprimir}>
-              Imprimir / PDF
-            </button>
-          </div>
-        }
+        right={<LiveBadge mode={mode} connected={connected} />}
       />
 
       {/* Informações do evento */}
