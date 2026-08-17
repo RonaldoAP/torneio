@@ -60,21 +60,21 @@ export function StandingsTable({
               <tr
                 key={r.playerId}
                 className={`group border-b border-line/50 transition-colors animate-reveal hover:bg-white/[0.03] ${
-                  qualified ? "bg-cyan/[0.04]" : ""
+                  qualified ? "bg-azul/[0.07]" : ""
                 }`}
               >
                 {/* posição + barra lateral (zona de classificação) */}
                 <td className="py-2 pl-0">
                   <span className="flex items-center">
                     <span
-                      className={`rounded-r ${big ? "h-12 w-1.5" : "h-9 w-1"} ${
-                        qualified ? "bg-cyan" : "bg-ink-muted/25"
+                      className={`rounded-r ${big ? "h-14 w-1.5" : "h-11 w-1"} ${
+                        qualified ? "bg-azul" : "bg-ink-muted/25"
                       }`}
                     />
                     <span
                       className={`ml-2 w-6 text-center font-display tabular ${
                         big ? "text-2xl" : "text-base"
-                      } ${qualified ? "text-cyan" : "text-ink-muted"}`}
+                      } ${qualified ? "text-azul" : "text-ink-muted"}`}
                     >
                       {pos}
                     </span>
@@ -84,10 +84,10 @@ export function StandingsTable({
                 {/* escudo (foto) + nome em caixa alta */}
                 <td className={`px-2 text-left ${big ? "py-4" : "py-3"}`}>
                   <span className="flex items-center gap-2.5">
-                    <Avatar name={r.name} photo={photoById.get(r.playerId)} size={big ? 44 : 32} />
+                    <Avatar name={r.name} photo={photoById.get(r.playerId)} size={big ? 52 : 40} />
                     <span
                       className={`truncate font-display font-bold uppercase tracking-wide text-ink ${
-                        big ? "text-3xl" : "text-lg"
+                        big ? "text-4xl" : "text-2xl"
                       }`}
                     >
                       {r.name}

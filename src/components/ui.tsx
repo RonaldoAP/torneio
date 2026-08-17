@@ -44,14 +44,21 @@ export function LiveBadge({ mode, connected }: { mode: DataMode; connected: bool
   );
 }
 
+/**
+ * "Escudo" do participante: foto em quadrado com moldura azul, como nas
+ * referências de chaveamento/confrontos. `round` volta ao círculo para os
+ * lugares onde ele ainda faz sentido (lista de participantes, avatar solto).
+ */
 export function Avatar({
   name,
   photo,
   size = 40,
+  round = false,
 }: {
   name: string;
   photo?: string | null;
   size?: number;
+  round?: boolean;
 }) {
   const initials = name
     .trim()
@@ -61,21 +68,20 @@ export function Avatar({
     .join("")
     .toUpperCase();
   const dim = { width: size, height: size };
+  const shape = round
+    ? "rounded-full border border-white/15"
+    : "foto-frame";
+
   if (photo) {
     // eslint-disable-next-line @next/next/no-img-element
     return (
-      <img
-        src={photo}
-        alt={name}
-        style={dim}
-        className="shrink-0 rounded-full border border-line object-cover"
-      />
+      <img src={photo} alt={name} style={dim} className={`shrink-0 object-cover ${shape}`} />
     );
   }
   return (
     <span
-      style={dim}
-      className="grid shrink-0 place-items-center rounded-full border border-line bg-white/5 font-display text-ink-muted"
+      style={{ ...dim, fontSize: size * 0.4 }}
+      className={`grid shrink-0 place-items-center bg-white/5 font-display leading-none text-ink-muted ${shape}`}
     >
       {initials}
     </span>

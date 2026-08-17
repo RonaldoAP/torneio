@@ -221,6 +221,13 @@ Classificam 6; **1º e 2º vão direto à semifinal**:
   (junto com a lanterna).
 
 ### Desistência / W.O. (`withdraw`)
+- A desistência fica **marcada no participante** (`players.withdrawn`), não só nos
+  jogos: qualquer partida que ele venha a ter — como uma semi que ainda dependia
+  da repescagem — **já nasce 3×0**. Quem aplica isso é o `settle()` (servidor) /
+  o laço no fim do `localAction` (local), que rodam depois de **toda** gravação:
+  aplicam `walkoverUpdates` e propagam a chave até estabilizar. Ver
+  `src/lib/walkover.ts` (puro, com testes).
+- `reinstate` desfaz a marca; os placares 3×0 já lançados permanecem.
 - Se alguém desiste, **todos os jogos dele viram W.O. 3×0 para os adversários**
   (jogos feitos e a fazer) — "desistência é vitória pra todo mundo".
 - **Gols de W.O. NÃO contam para a artilharia** (`counts_for_scorers = false`).
@@ -423,6 +430,15 @@ Mosquito. Os outros 8 jogos do Mosquito continuam perdidos.
 - Pra testar visual sem afetar produção: rode local (`npm run dev`) — sem envs de
   Supabase ele usa o modo local com jogadores semente.
 - O tema, cores e animações estão em `tailwind.config.ts` e `globals.css`.
+- **Visual (regra da casa):** fundo `#01040A` com a foto de estádio
+  (`public/estadio.jpg`) numa camada fixa em `body::before`, coberta por um
+  gradiente escuro. O `body` **não** pode ter cor de fundo própria — ela taparia
+  o `::before` (que usa `z-index: -1`). Todo box usa `.panel`: vidro escuro com
+  `backdrop-filter: blur(16px)`. Foto de participante é **quadrada com moldura
+  azul** (`.foto-frame`, `#3E9BE9`) — o "escudo"; `<Avatar round />` volta ao
+  círculo onde fizer sentido.
+- **Navegação:** topo com escudo à esquerda e **hambúrguer à direita**, no
+  celular e no desktop (`TabBar.tsx`).
 - **Tipografia (regra da casa):** `font-display` = **Sofia Sans Extra Condensed**,
   sempre em **CAIXA ALTA** — títulos, nomes de participantes, placares e tabelas.
   O `text-transform: uppercase` está uma vez só, na regra `.font-display` do

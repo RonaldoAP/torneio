@@ -9,10 +9,10 @@ const config: Config = {
     extend: {
       colors: {
         // Estilo Champions League: azul-marinho profundo, azul elétrico e ciano.
-        base: "#050A2C",
+        base: "#01040A",
         panel: {
-          DEFAULT: "#0A1145",
-          light: "#0E185C",
+          DEFAULT: "#081426",
+          light: "#0E2038",
         },
         // token 'gremio' mantido por compatibilidade = azul elétrico da Champions
         gremio: {
@@ -20,13 +20,14 @@ const config: Config = {
           dark: "#1E2E8C",
         },
         cyan: "#25E4FF", // ciano de destaque (zona de classificação)
+        azul: "#3E9BE9", // azul das molduras de foto (referência do Figma)
         branco: "#FFFFFF",
         ink: {
           DEFAULT: "#EAF0FF",
           muted: "#8FA0D0",
         },
         danger: "#FF5B62",
-        line: "rgba(255,255,255,0.06)",
+        line: "rgba(255,255,255,0.08)",
       },
       fontFamily: {
         // display = títulos, nomes de participantes, placares e tabelas

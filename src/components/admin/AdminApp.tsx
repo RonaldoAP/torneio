@@ -487,7 +487,14 @@ export function AdminApp({ slug }: { slug?: string }) {
             <li key={p.id} className="flex items-center gap-3 rounded-lg border border-line bg-base/40 px-3 py-2">
               <span className="w-4 shrink-0 text-center text-ink-muted">{i + 1}</span>
               <Avatar name={p.name} photo={p.photo} size={40} />
-              <span className="min-w-0 flex-1 truncate font-display text-xl tracking-wide">{p.name}</span>
+              <span className="min-w-0 flex-1 truncate font-display text-xl tracking-wide">
+                {p.name}
+              </span>
+              {p.withdrawn && (
+                <span className="chip border-danger/50 font-sans text-danger" title="Desistiu — todos os jogos dele são W.O. 3×0">
+                  desistiu
+                </span>
+              )}
               <label className="btn-ghost cursor-pointer px-2 py-1 text-xs" title="Enviar/trocar foto">
                 {p.photo ? "Trocar foto" : "Foto"}
                 <input
@@ -545,8 +552,11 @@ export function AdminApp({ slug }: { slug?: string }) {
         <h2 className="mb-1 font-display text-xl tracking-wide">Desistência (W.O.)</h2>
         <p className="mb-3 text-xs text-ink-muted">
           Se alguém abandonar, todos os jogos dele — feitos ou a fazer — viram vitória por 3×0 para
-          os adversários (todos em igualdade). Os gols de W.O. não contam para a artilharia. No
-          mata-mata, o adversário avança.
+          os adversários (todos em igualdade). Os gols de W.O. não contam para a artilharia nem para
+          a melhor defesa. No mata-mata, o adversário avança. A marca fica{" "}
+          <strong className="text-ink">grudada na pessoa</strong>: qualquer jogo que ela ainda vier a
+          ter — como uma semifinal que dependia da repescagem — já nasce 3×0, sem precisar registrar
+          de novo.
         </p>
         <div className="flex flex-wrap items-end gap-2">
           <select className="input" value={quitId} onChange={(e) => setQuitId(e.target.value)}>
@@ -573,6 +583,39 @@ export function AdminApp({ slug }: { slug?: string }) {
             Registrar desistência
           </button>
         </div>
+
+        {players.some((p) => p.withdrawn) && (
+          <div className="mt-3 border-t border-line pt-3">
+            <p className="mb-2 text-xs text-ink-muted">Quem está marcado como desistente:</p>
+            <ul className="flex flex-wrap gap-2">
+              {players
+                .filter((p) => p.withdrawn)
+                .map((p) => (
+                  <li key={p.id} className="flex items-center gap-2 rounded-lg border border-danger/40 bg-danger/10 px-2.5 py-1.5">
+                    <span className="font-display text-lg tracking-wide text-ink">{p.name}</span>
+                    <button
+                      className="text-xs text-ink-muted underline hover:text-ink"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `Cancelar a desistência de ${p.name}? Os placares 3×0 já lançados continuam — corrija à mão os que quiser.`,
+                          )
+                        ) {
+                          actUndo(
+                            `cancelar desistência de ${p.name}`,
+                            () => adminActions.reinstate(p.id),
+                            `${p.name} voltou ao torneio.`,
+                          );
+                        }
+                      }}
+                    >
+                      cancelar
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Placares da liga */}

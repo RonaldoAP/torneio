@@ -10,6 +10,7 @@ import {
   nextEditionId,
   removalBlockedMessage,
 } from "@/lib/editions";
+import { walkoverUpdates } from "@/lib/walkover";
 import type { Config, Edition, Match, Player, TournamentState } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +93,29 @@ async function propagateBracket(multi: boolean, edition: number) {
       patch.pen_winner_id = null;
     }
     await db.from("matches").update(patch).eq("id", u.id);
+  }
+}
+
+/**
+ * Deixa o estado consistente depois de qualquer gravação: aplica o 3×0 de quem
+ * desistiu (inclusive em partidas que acabaram de ganhar adversário) e propaga
+ * a chave. Repete enquanto houver mudança — propagar pode revelar um novo
+ * confronto com um desistente, que por sua vez faz a chave avançar de novo.
+ */
+async function settle(multi: boolean, edition: number) {
+  const db = getAdminClient();
+  for (let volta = 0; volta < 4; volta++) {
+    const [p, m] = await Promise.all([
+      scoped(db.from("players").select("*"), multi, edition),
+      scoped(db.from("matches").select("*"), multi, edition),
+    ]);
+    const patches = walkoverUpdates((p.data as Player[]) ?? [], (m.data as Match[]) ?? []);
+    for (const patch of patches) {
+      const { id, ...campos } = patch;
+      await db.from("matches").update(campos).eq("id", id);
+    }
+    await propagateBracket(multi, edition);
+    if (patches.length === 0) break;
   }
 }
 
@@ -244,22 +268,17 @@ export async function POST(req: Request) {
       }
 
       case "withdraw": {
-        // Desistência = W.O. 3×0 para todos os adversários (jogos feitos e a fazer).
-        const pid = payload.id as string;
-        const { data } = await scoped(db.from("matches").select("*"), multi, ed);
-        const all = (data as Match[]) ?? [];
-        for (const m of all) {
-          if (m.stage === "desempate") continue;
-          const isHome = m.home_id === pid;
-          const isAway = m.away_id === pid;
-          if ((!isHome && !isAway) || !m.home_id || !m.away_id) continue;
-          const goals = isHome ? { home_goals: 0, away_goals: 3 } : { home_goals: 3, away_goals: 0 };
-          await db
-            .from("matches")
-            .update({ ...goals, pen_winner_id: null, counts_for_scorers: false })
-            .eq("id", m.id);
-        }
-        await propagateBracket(multi, ed);
+        // A desistência fica marcada NO PARTICIPANTE: o settle() abaixo aplica o
+        // 3×0 em tudo que ele tem pela frente, agora e nas partidas que ainda
+        // vão ganhar adversário.
+        await db.from("players").update({ withdrawn: true }).eq("id", payload.id);
+        break;
+      }
+
+      case "reinstate": {
+        // Desfaz a marca. Os placares 3×0 já lançados continuam — o admin
+        // corrige à mão os que quiser.
+        await db.from("players").update({ withdrawn: false }).eq("id", payload.id);
         break;
       }
 
@@ -326,6 +345,7 @@ export async function POST(req: Request) {
           const rows = state.players.map((p, i) => ({
             name: p.name,
             photo: p.photo ?? null,
+            withdrawn: false,
             edition: id,
             created_at: new Date(Date.now() + i).toISOString(),
           }));
@@ -406,6 +426,7 @@ export async function POST(req: Request) {
               name: p.name,
               photo: p.photo ?? null,
               created_at: p.created_at,
+              withdrawn: p.withdrawn ?? false,
               ...(multi ? { edition: keepEdition(p) } : {}),
             })),
           );
@@ -438,6 +459,7 @@ export async function POST(req: Request) {
         return bad("Ação desconhecida.");
     }
 
+    await settle(multi, ed);
     const state = await loadState();
     return NextResponse.json({ ok: true, state });
   } catch (err: any) {

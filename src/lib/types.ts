@@ -23,6 +23,8 @@ export interface Player {
   photo?: string | null; // foto de perfil (data URI ou URL) — opcional
   /** edição a que pertence (1ª, 2ª, ...). Ausente = 1ª edição. */
   edition?: number | null;
+  /** desistiu do torneio: todos os jogos dele viram W.O. e assim seguem */
+  withdrawn?: boolean | null;
 }
 
 export interface Match {

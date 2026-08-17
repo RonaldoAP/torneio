@@ -26,7 +26,7 @@ export default function ClassificacaoPage() {
           <StandingsTable players={players} matches={matches} />
           <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span>
-              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-cyan align-middle" />
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-azul align-middle" />
               Zona de classificação (Top 6) · 1º e 2º vão direto à semifinal
             </span>
             <span>Pts pontos · PJ jogos · V vitórias · E empates · D derrotas</span>

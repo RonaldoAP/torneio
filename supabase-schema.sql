@@ -82,6 +82,8 @@ create table if not exists editions (
 );
 
 alter table players add column if not exists edition int not null default 1;
+-- desistência fica marcada no participante (W.O. vale para jogos futuros também)
+alter table players add column if not exists withdrawn boolean not null default false;
 alter table matches add column if not exists edition int not null default 1;
 alter table config  add column if not exists current_edition int not null default 1;
 

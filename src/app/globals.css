@@ -6,19 +6,33 @@
   color-scheme: dark;
 }
 
-html,
-body {
-  background-color: #050a2c;
-  color: #eaf0ff;
+html {
+  background-color: #01040a;
 }
 
 body {
   min-height: 100dvh;
+  color: #eaf0ff;
+  /* sem cor de fundo própria: o ::before abaixo tem z-index -1 e ficaria
+     escondido atrás dela — o fundo fica no <html>. */
+  background-color: transparent;
+}
+
+/* Estádio ao fundo em todas as telas, coberto pela cor de fundo para o conteúdo
+   ler bem. Camada fixa própria (e não background-attachment: fixed) porque no
+   iOS o attachment fixed engasga a rolagem. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
   background-image:
-    radial-gradient(1100px 560px at 50% -12%, rgba(59, 91, 255, 0.22), transparent 62%),
-    radial-gradient(900px 520px at 100% 0%, rgba(37, 228, 255, 0.08), transparent 55%),
-    radial-gradient(700px 500px at 0% 30%, rgba(30, 46, 140, 0.18), transparent 60%);
-  background-attachment: fixed;
+    radial-gradient(1200px 700px at 50% -8%, rgba(62, 155, 233, 0.18), transparent 62%),
+    linear-gradient(rgba(1, 4, 10, 0.62), rgba(1, 4, 10, 0.86) 55%, rgba(1, 4, 10, 0.94)),
+    url("/estadio.jpg");
+  background-size: cover;
+  background-position: center 20%;
+  background-repeat: no-repeat;
 }
 
 @layer base {
@@ -44,12 +58,25 @@ body {
 }
 
 @layer components {
+  /* Todo box "flutua" sobre o estádio: vidro escuro com blur no fundo, para o
+     texto ter contraste sem esconder a imagem. */
   .panel {
-    @apply rounded-2xl border border-line bg-panel/70 backdrop-blur-sm;
-    background-image: linear-gradient(160deg, #0e185c 0%, #0a1145 100%);
+    @apply rounded-2xl border border-white/10;
+    background-image: linear-gradient(
+      160deg,
+      rgba(12, 26, 48, 0.72) 0%,
+      rgba(3, 9, 20, 0.78) 100%
+    );
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+  }
+  /* Moldura quadrada das fotos — o "escudo" do participante. */
+  .foto-frame {
+    @apply overflow-hidden rounded-[3px] bg-panel;
+    border: 2px solid #3e9be9;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-xs font-medium text-ink-muted;
+    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-ink-muted backdrop-blur-sm;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-medium transition-colors;

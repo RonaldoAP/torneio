@@ -7,6 +7,7 @@ import { generateBalancedLeague } from "./drawConstraints";
 import { computeStandings } from "./standings";
 import { seedBracket, recomputeBracket } from "./bracket";
 import { editionOf, forEdition, makeEdition, nextEditionId } from "./editions";
+import { applyWalkovers } from "./walkover";
 
 // Slug secreto do admin — enviado em cada gravação (o servidor autoriza por ele).
 let adminSlug = "";
@@ -142,25 +143,15 @@ async function localAction(action: string, payload: any) {
       state.matches = state.matches.filter((m) => m.id !== payload.id);
       break;
     case "withdraw": {
-      // Desistência = W.O. 3×0 para todos os adversários (jogos feitos e a fazer).
-      const pid = payload.id as string;
-      for (const m of myMatches) {
-        if (m.stage === "desempate") continue;
-        const isHome = m.home_id === pid;
-        const isAway = m.away_id === pid;
-        if (!isHome && !isAway) continue;
-        if (!m.home_id || !m.away_id) continue;
-        if (isHome) {
-          m.home_goals = 0;
-          m.away_goals = 3;
-        } else {
-          m.home_goals = 3;
-          m.away_goals = 0;
-        }
-        m.pen_winner_id = null;
-        m.counts_for_scorers = false; // gols de W.O. não contam para artilharia
-      }
-      localPropagate(state, cur); // mata-mata: adversário avança
+      // A marca fica no participante; o settle no fim aplica o 3×0 em tudo que
+      // ele tem pela frente — inclusive no que ainda vai ganhar adversário.
+      const p = state.players.find((x) => x.id === payload.id);
+      if (p) p.withdrawn = true;
+      break;
+    }
+    case "reinstate": {
+      const p = state.players.find((x) => x.id === payload.id);
+      if (p) p.withdrawn = false;
       break;
     }
     case "seed_bracket": {
@@ -291,6 +282,15 @@ async function localAction(action: string, payload: any) {
     default:
       throw new Error("Ação desconhecida.");
   }
+
+  // Fecha o ciclo igual ao servidor: W.O. de quem desistiu + chave propagada,
+  // repetindo enquanto houver mudança.
+  const atual = currentEdition(state);
+  for (let volta = 0; volta < 4; volta++) {
+    const mudou = applyWalkovers(forEdition(state.players, atual), forEdition(state.matches, atual));
+    localPropagate(state, atual);
+    if (!mudou) break;
+  }
   writeLocal(state);
 }
 
@@ -321,6 +321,8 @@ export const adminActions = {
     adminActions.run("create_desempate", { home_id, away_id }),
   deleteMatch: (id: string) => adminActions.run("delete_match", { id }),
   withdraw: (id: string) => adminActions.run("withdraw", { id }),
+  /** Desfaz a marca de desistência (os placares 3×0 já lançados permanecem). */
+  reinstate: (id: string) => adminActions.run("reinstate", { id }),
   seedBracket: () => adminActions.run("seed_bracket"),
   resetScores: () => adminActions.run("reset_scores"),
   closeTournament: () => adminActions.run("close_tournament"),
