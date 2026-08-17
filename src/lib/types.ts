@@ -21,6 +21,8 @@ export interface Player {
   name: string;
   created_at: string;
   photo?: string | null; // foto de perfil (data URI ou URL) — opcional
+  /** edição a que pertence (1ª, 2ª, ...). Ausente = 1ª edição. */
+  edition?: number | null;
 }
 
 export interface Match {
@@ -35,6 +37,8 @@ export interface Match {
   counts_for_scorers: boolean;
   slot: Slot | null;
   created_at: string;
+  /** edição a que pertence (1ª, 2ª, ...). Ausente = 1ª edição. */
+  edition?: number | null;
 }
 
 export interface Config {
@@ -42,6 +46,21 @@ export interface Config {
   tournament_name: string;
   phase: Phase;
   bracket_seeded: boolean;
+  /** edição em cartaz — é a que o site mostra. Ausente = 1ª edição. */
+  current_edition?: number | null;
+}
+
+/** Metadados de uma edição do torneio (uma linha por edição). */
+export interface Edition {
+  id: number; // 1, 2, 3...
+  name: string; // "Copa Costela"
+  event_date: string | null; // "18 de julho"
+  event_time: string | null; // "10h"
+  event_local: string | null; // "Casa do Léo"
+  event_note: string | null; // recado do sorteio/W.O.
+  created_at: string;
+  /** preenchido quando a edição é arquivada (uma nova começa) */
+  closed_at: string | null;
 }
 
 export interface StandingRow {
@@ -70,4 +89,6 @@ export interface TournamentState {
   config: Config;
   players: Player[];
   matches: Match[];
+  /** presente nos backups/estados que já conhecem edições */
+  editions?: Edition[];
 }

@@ -5,7 +5,8 @@ import { useTournament } from "@/lib/useTournament";
 import { adminActions, setAdminSlug } from "@/lib/adminActions";
 import { computeStandings, TOP_N } from "@/lib/standings";
 import { computeScorers } from "@/lib/scorers";
-import type { Match, TournamentState } from "@/lib/types";
+import { editionLabel, eventInfo, removalBlockedMessage, removalImpact } from "@/lib/editions";
+import type { Match, Player, TournamentState } from "@/lib/types";
 import { ScoreEditor } from "@/components/admin/ScoreEditor";
 import { Avatar } from "@/components/ui";
 import { fileToAvatarDataUrl } from "@/lib/image";
@@ -17,11 +18,17 @@ import { fileToAvatarDataUrl } from "@/lib/image";
  */
 export function AdminApp({ slug }: { slug?: string }) {
   const state = useTournament();
-  const { mode, players, matches, config } = state;
+  const { mode, players, matches, config, edition, editionInfo } = state;
   const isLocal = mode === "local";
+  const ev = eventInfo(editionInfo);
 
   const [name, setName] = useState("");
   const [tName, setTName] = useState(config.tournament_name);
+  const [evDate, setEvDate] = useState(ev.date);
+  const [evTime, setEvTime] = useState(ev.time);
+  const [evLocal, setEvLocal] = useState(ev.local);
+  const [evNote, setEvNote] = useState(ev.note);
+  const [copyPlayers, setCopyPlayers] = useState(true);
   const [deA, setDeA] = useState("");
   const [deB, setDeB] = useState("");
   const [quitId, setQuitId] = useState("");
@@ -36,6 +43,15 @@ export function AdminApp({ slug }: { slug?: string }) {
   }, [slug]);
 
   useEffect(() => setTName(config.tournament_name), [config.tournament_name]);
+
+  // Ao trocar de edição, os campos do evento acompanham o que está gravado.
+  useEffect(() => {
+    const e = eventInfo(editionInfo);
+    setEvDate(e.date);
+    setEvTime(e.time);
+    setEvLocal(e.local);
+    setEvNote(e.note);
+  }, [editionInfo]);
 
   async function act(fn: () => Promise<any>, okMsg?: string) {
     setError(null);
@@ -76,6 +92,27 @@ export function AdminApp({ slug }: { slug?: string }) {
     } catch (e: any) {
       setError(e?.message ?? "Falha ao desfazer.");
     }
+  }
+
+  /**
+   * Remover apaga o participante E TODOS os jogos dele — foi assim que a 1ª
+   * edição perdeu 10 partidas já jogadas. Com jogos na mesa, mostra o estrago
+   * antes, lembra do W.O. e só então apaga (com Desfazer disponível).
+   */
+  async function removeParticipant(p: Player) {
+    const impact = removalImpact(matches, p.id);
+    if (impact.total === 0) {
+      if (!confirm(`Remover ${p.name} da lista?`)) return;
+      return act(() => adminActions.removePlayer(p.id), `${p.name} removido.`);
+    }
+    const aviso = removalBlockedMessage(matches, p.id, p.name);
+    const jogos = `${impact.total} ${impact.total === 1 ? "jogo" : "jogos"}`;
+    if (!confirm(`${aviso}\n\nApagar ${p.name} e ${jogos} mesmo assim?`)) return;
+    return actUndo(
+      `remover ${p.name}`,
+      () => adminActions.removePlayer(p.id, true),
+      `${p.name} e ${jogos} removidos.`,
+    );
   }
 
   const ligaRounds = useMemo(() => {
@@ -152,7 +189,7 @@ export function AdminApp({ slug }: { slug?: string }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `torneio-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `torneio-ed${edition}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -177,6 +214,7 @@ export function AdminApp({ slug }: { slug?: string }) {
         <h1 className="font-display text-3xl tracking-wide">Painel do Admin</h1>
         <div className="flex items-center gap-2">
           <span className="chip">{isLocal ? "Modo local" : "Supabase · ao vivo"}</span>
+          <span className="chip border-cyan/50 text-cyan">{editionLabel(edition)}</span>
           <span className="chip">Fase: {config.phase}</span>
         </div>
       </div>
@@ -238,6 +276,105 @@ export function AdminApp({ slug }: { slug?: string }) {
           </button>
         </div>
       )}
+
+      {/* Edição: dados do evento + abrir a próxima */}
+      <section className="panel p-4">
+        <h2 className="mb-1 font-display text-xl tracking-wide">
+          Edição em cartaz <span className="text-sm text-ink-muted">({editionLabel(edition)})</span>
+        </h2>
+        <p className="mb-3 text-xs text-ink-muted">
+          Estes dados aparecem no regulamento e no telão. Editáveis sem precisar de deploy.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-xs text-ink-muted">Data</label>
+            <input className="input w-full" value={evDate} onChange={(e) => setEvDate(e.target.value)} placeholder="18 de julho" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-ink-muted">Hora</label>
+            <input className="input w-full" value={evTime} onChange={(e) => setEvTime(e.target.value)} placeholder="10h" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-ink-muted">Local</label>
+            <input className="input w-full" value={evLocal} onChange={(e) => setEvLocal(e.target.value)} placeholder="Casa do Léo" />
+          </div>
+        </div>
+        <div className="mt-2">
+          <label className="mb-1 block text-xs text-ink-muted">Recado (sorteio / W.O.)</label>
+          <input className="input w-full" value={evNote} onChange={(e) => setEvNote(e.target.value)} />
+        </div>
+        <button
+          className="btn-ghost mt-3"
+          onClick={() =>
+            act(
+              () =>
+                adminActions.setEditionMeta({
+                  event_date: evDate,
+                  event_time: evTime,
+                  event_local: evLocal,
+                  event_note: evNote,
+                }),
+              "Dados do evento salvos.",
+            )
+          }
+        >
+          Salvar dados do evento
+        </button>
+
+        <div className="mt-4 border-t border-line pt-3">
+          <h3 className="font-display tracking-wide text-ink">Abrir a próxima edição</h3>
+          <p className="mt-1 text-xs text-ink-muted">
+            A edição atual é <strong className="text-ink">arquivada no Histórico</strong> (classificação,
+            chave e artilharia ficam guardadas) e a próxima começa zerada: sem jogos, sem placares.
+            Nada da edição arquivada pode ser alterado depois.
+          </p>
+          <label className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
+            <input
+              type="checkbox"
+              checked={copyPlayers}
+              onChange={(e) => setCopyPlayers(e.target.checked)}
+            />
+            Levar os {players.length} participantes atuais (com foto) para a nova edição
+          </label>
+          <button
+            className="btn-primary mt-2"
+            onClick={() => {
+              if (
+                confirm(
+                  `Arquivar a ${editionLabel(edition)} e abrir a ${editionLabel(edition + 1)}?\n\n` +
+                    "A edição atual vira histórico (só leitura) e o site passa a mostrar a nova, zerada.",
+                )
+              ) {
+                act(
+                  () => adminActions.newEdition({ copy_players: copyPlayers }),
+                  `${editionLabel(edition + 1)} aberta. A anterior está no Histórico.`,
+                );
+              }
+            }}
+          >
+            Arquivar e abrir a {editionLabel(edition + 1)}
+          </button>
+          {edition > 1 && matches.length === 0 && (
+            <button
+              className="btn-ghost mt-2 sm:ml-2"
+              onClick={() => {
+                if (
+                  confirm(
+                    `Voltar para a ${editionLabel(edition - 1)}? A ${editionLabel(edition)} ainda não tem jogos e será descartada.`,
+                  )
+                ) {
+                  act(
+                    () => adminActions.discardEdition(),
+                    `De volta à ${editionLabel(edition - 1)}.`,
+                  );
+                }
+              }}
+            >
+              Desfazer: voltar para a {editionLabel(edition - 1)}
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* Configuração + fases */}
       <section className="panel p-4">
@@ -369,10 +506,7 @@ export function AdminApp({ slug }: { slug?: string }) {
                   ✕
                 </button>
               )}
-              <button
-                className="btn-danger px-2 py-1 text-xs"
-                onClick={() => act(() => adminActions.removePlayer(p.id))}
-              >
+              <button className="btn-danger px-2 py-1 text-xs" onClick={() => removeParticipant(p)}>
                 Remover
               </button>
             </li>
@@ -525,7 +659,11 @@ export function AdminApp({ slug }: { slug?: string }) {
 
       {/* Backup */}
       <section className="panel p-4">
-        <h2 className="mb-3 font-display text-xl tracking-wide">Backup do evento (JSON)</h2>
+        <h2 className="mb-1 font-display text-xl tracking-wide">Backup do evento (JSON)</h2>
+        <p className="mb-3 text-xs text-ink-muted">
+          Exporta e importa a <strong className="text-ink">{editionLabel(edition)}</strong> — as
+          edições arquivadas no Histórico não são tocadas. Exporte antes de qualquer ação destrutiva.
+        </p>
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-ghost" onClick={exportJson}>
             Exportar JSON

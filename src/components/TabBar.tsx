@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEditions } from "@/lib/useTournament";
 
 const TABS = [
   { href: "/", label: "Regulamento" },
@@ -14,6 +15,10 @@ const TABS = [
 
 export function TabBar() {
   const pathname = usePathname();
+  const { editions, current } = useEditions();
+  // A aba Histórico só aparece quando existe alguma edição arquivada.
+  const hasHistory = editions.some((e) => e.id !== current);
+  const tabs = hasHistory ? [...TABS, { href: "/historico", label: "Histórico" }] : TABS;
 
   // Rota TV/Projetor é fullscreen — sem barra.
   if (pathname?.startsWith("/tv")) return null;
@@ -32,7 +37,7 @@ export function TabBar() {
 
         {/* Abas como toggles: todas visíveis, sem scroll (quebram em linhas). */}
         <nav className="flex flex-wrap gap-1.5" aria-label="Seções">
-          {TABS.map((t) => {
+          {tabs.map((t) => {
             const active =
               t.href === "/" ? pathname === "/" : pathname?.startsWith(t.href);
             return (

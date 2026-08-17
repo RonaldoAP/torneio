@@ -2,7 +2,7 @@
 
 import { useTournament } from "@/lib/useTournament";
 import { PageHeader, LiveBadge } from "@/components/ui";
-import { EVENT } from "@/lib/config";
+import { editionLabel, eventInfo } from "@/lib/editions";
 
 const RULES: { n: string; title: string; body: React.ReactNode }[] = [
   {
@@ -130,13 +130,14 @@ const RULES: { n: string; title: string; body: React.ReactNode }[] = [
 ];
 
 export default function RegulamentoPage() {
-  const { config, mode, connected, loading } = useTournament();
+  const { config, mode, connected, loading, edition, editionInfo } = useTournament();
+  const EVENT = eventInfo(editionInfo);
 
   return (
     <div className="animate-reveal">
       <PageHeader
         title={loading ? "Regulamento" : config.tournament_name}
-        subtitle="Regulamento oficial do torneio"
+        subtitle={`Regulamento oficial · ${editionLabel(edition)}`}
         right={
           <div className="flex items-center gap-2 no-print">
             <LiveBadge mode={mode} connected={connected} />

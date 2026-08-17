@@ -1,6 +1,8 @@
 "use client";
 
-import type { Config, Match, Player, TournamentState } from "./types";
+import type { Config, Edition, Match, Player, TournamentState } from "./types";
+import { EVENT } from "./config";
+import { FIRST_EDITION, editionOf, removalBlockedMessage } from "./editions";
 
 // ----------------------------------------------------------------------------
 // Modo LOCAL (sem backend): estado em localStorage, um dispositivo só.
@@ -21,16 +23,29 @@ function uuid(): string {
 // Jogadores já confirmados — semeados no estado inicial para que todos vejam
 // ao abrir o site (modo local). O admin pode adicionar/remover à vontade.
 const SEED_PLAYERS: Player[] = [
-  { id: "seed-ronaldo", name: "Ronaldo", created_at: "2026-01-01T00:00:00.000Z" },
-  { id: "seed-allan", name: "Allan", created_at: "2026-01-01T00:00:01.000Z" },
-  { id: "seed-leo", name: "Léo", created_at: "2026-01-01T00:00:02.000Z" },
-  { id: "seed-riquelme", name: "Riquelme", created_at: "2026-01-01T00:00:03.000Z" },
-  { id: "seed-mosquito", name: "Mosquito", created_at: "2026-01-01T00:00:04.000Z" },
-  { id: "seed-gui", name: "Gui", created_at: "2026-01-01T00:00:05.000Z" },
-  { id: "seed-jhon", name: "Jhon", created_at: "2026-01-01T00:00:06.000Z" },
-  { id: "seed-luis", name: "Luis", created_at: "2026-01-01T00:00:07.000Z" },
-  { id: "seed-vinicius", name: "Vinicius", created_at: "2026-01-01T00:00:08.000Z" },
-  { id: "seed-andre", name: "André", created_at: "2026-01-01T00:00:09.000Z" },
+  { id: "seed-ronaldo", name: "Ronaldo", created_at: "2026-01-01T00:00:00.000Z", edition: 1 },
+  { id: "seed-allan", name: "Allan", created_at: "2026-01-01T00:00:01.000Z", edition: 1 },
+  { id: "seed-leo", name: "Léo", created_at: "2026-01-01T00:00:02.000Z", edition: 1 },
+  { id: "seed-riquelme", name: "Riquelme", created_at: "2026-01-01T00:00:03.000Z", edition: 1 },
+  { id: "seed-mosquito", name: "Mosquito", created_at: "2026-01-01T00:00:04.000Z", edition: 1 },
+  { id: "seed-gui", name: "Gui", created_at: "2026-01-01T00:00:05.000Z", edition: 1 },
+  { id: "seed-jhon", name: "Jhon", created_at: "2026-01-01T00:00:06.000Z", edition: 1 },
+  { id: "seed-luis", name: "Luis", created_at: "2026-01-01T00:00:07.000Z", edition: 1 },
+  { id: "seed-vinicius", name: "Vinicius", created_at: "2026-01-01T00:00:08.000Z", edition: 1 },
+  { id: "seed-andre", name: "André", created_at: "2026-01-01T00:00:09.000Z", edition: 1 },
+];
+
+const SEED_EDITIONS: Edition[] = [
+  {
+    id: FIRST_EDITION,
+    name: "Copa Costela",
+    event_date: EVENT.date,
+    event_time: EVENT.time,
+    event_local: EVENT.local,
+    event_note: EVENT.note,
+    created_at: "2026-01-01T00:00:00.000Z",
+    closed_at: null,
+  },
 ];
 
 // Sobe a versão quando a lista de confirmados muda, para atualizar até quem
@@ -44,11 +59,22 @@ export function migrateSeed() {
   if (typeof window === "undefined") return;
   if (window.localStorage.getItem(SEED_VERSION_KEY) === String(SEED_VERSION)) return;
   const s = readLocal();
-  if (s.matches.length === 0) {
-    s.players = SEED_PLAYERS.map((p) => ({ ...p }));
+  const cur = currentEdition(s);
+  // Só re-semeia a 1ª edição e só enquanto ela não tiver jogos — edições
+  // seguintes têm a lista própria montada no painel e não podem ser mexidas.
+  if (cur === FIRST_EDITION && s.matches.every((m) => editionOf(m) !== cur)) {
+    s.players = [
+      ...s.players.filter((p) => editionOf(p) !== cur),
+      ...SEED_PLAYERS.map((p) => ({ ...p })),
+    ];
     writeLocal(s);
   }
   window.localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+}
+
+/** Edição em cartaz no estado local. */
+export function currentEdition(state: TournamentState): number {
+  return state.config.current_edition ?? FIRST_EDITION;
 }
 
 function emptyState(): TournamentState {
@@ -58,9 +84,11 @@ function emptyState(): TournamentState {
       tournament_name: "Copa Costela",
       phase: "liga",
       bracket_seeded: false,
+      current_edition: FIRST_EDITION,
     },
     players: SEED_PLAYERS.map((p) => ({ ...p })),
     matches: [],
+    editions: SEED_EDITIONS.map((e) => ({ ...e })),
   };
 }
 
@@ -74,6 +102,7 @@ export function readLocal(): TournamentState {
       config: { ...emptyState().config, ...parsed.config },
       players: parsed.players ?? [],
       matches: parsed.matches ?? [],
+      editions: parsed.editions?.length ? parsed.editions : SEED_EDITIONS.map((e) => ({ ...e })),
     };
   } catch {
     return emptyState();
@@ -106,14 +135,29 @@ export const localApi = {
   },
   addPlayer(name: string) {
     mutate((s) => {
-      if (s.players.length >= 12) return;
-      s.players.push({ id: uuid(), name, created_at: new Date().toISOString() });
+      const cur = currentEdition(s);
+      if (s.players.filter((p) => editionOf(p) === cur).length >= 12) return;
+      s.players.push({ id: uuid(), name, created_at: new Date().toISOString(), edition: cur });
     });
   },
-  removePlayer(id: string) {
+  /** Remove o participante E os jogos dele. Com jogos na mesa exige `force`. */
+  removePlayer(id: string, force = false) {
+    const state = readLocal();
+    const cur = currentEdition(state);
+    const mine = state.matches.filter((m) => editionOf(m) === cur);
+    if (!force) {
+      const blocked = removalBlockedMessage(
+        mine,
+        id,
+        state.players.find((p) => p.id === id)?.name,
+      );
+      if (blocked) throw new Error(blocked);
+    }
     mutate((s) => {
       s.players = s.players.filter((p) => p.id !== id);
-      s.matches = s.matches.filter((m) => m.home_id !== id && m.away_id !== id);
+      s.matches = s.matches.filter(
+        (m) => editionOf(m) !== cur || (m.home_id !== id && m.away_id !== id),
+      );
     });
   },
   setMatches(matches: Match[]) {
@@ -134,9 +178,19 @@ export const localApi = {
       if (i >= 0) s.matches[i] = { ...s.matches[i], ...patch };
     });
   },
-  newMatch(partial: Partial<Match>): Match {
+  newPlayer(partial: { name: string; photo?: string | null; edition?: number }): Player {
     return {
       id: uuid(),
+      name: partial.name,
+      photo: partial.photo ?? null,
+      created_at: new Date().toISOString(),
+      edition: partial.edition ?? FIRST_EDITION,
+    };
+  },
+  newMatch(partial: Partial<Match>, edition = FIRST_EDITION): Match {
+    return {
+      id: uuid(),
+      edition: partial.edition ?? edition,
       stage: partial.stage ?? "liga",
       round: partial.round ?? null,
       home_id: partial.home_id ?? null,

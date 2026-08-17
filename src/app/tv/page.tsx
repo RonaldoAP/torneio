@@ -9,7 +9,7 @@ import { LiveBadge, Avatar } from "@/components/ui";
 import { computeStandings } from "@/lib/standings";
 import { computeScorers } from "@/lib/scorers";
 import { seedBracket } from "@/lib/bracket";
-import { EVENT } from "@/lib/config";
+import { eventInfo } from "@/lib/editions";
 import type { Match, Player } from "@/lib/types";
 
 const POLL_MS = 6000; // rebusca de dados (freshness), independente da duração da tela
@@ -24,7 +24,8 @@ interface Slide {
 }
 
 export default function TvPage() {
-  const { players, matches, config, mode, connected, refresh } = useTournament();
+  const { players, matches, config, mode, connected, refresh, editionInfo } = useTournament();
+  const EVENT = eventInfo(editionInfo);
 
   // Telão pode rodar por horas numa TV onde o websocket do realtime cai sem
   // avisar. Para garantir que a tela nunca fique defasada, rebuscamos os dados
@@ -135,7 +136,7 @@ export default function TvPage() {
     return list;
   }, [players, matches]);
 
-  return <Slideshow slides={slides} config={config} mode={mode} connected={connected} />;
+  return <Slideshow slides={slides} config={config} mode={mode} connected={connected} event={EVENT} />;
 }
 
 /* ------------------------------------------------------------------ */
@@ -145,11 +146,13 @@ function Slideshow({
   config,
   mode,
   connected,
+  event,
 }: {
   slides: Slide[];
   config: { tournament_name: string; phase: string };
   mode: "supabase" | "local";
   connected: boolean;
+  event: { date: string; time: string; local: string };
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -248,7 +251,7 @@ function Slideshow({
             <div>
               <div className="mb-2 font-display text-4xl text-ink">Tudo pronto pro pontapé inicial ⚽</div>
               <div className="text-lg">
-                📅 {EVENT.date} · 🕒 {EVENT.time} · 📍 {EVENT.local}
+                📅 {event.date} · 🕒 {event.time} · 📍 {event.local}
               </div>
             </div>
           </div>

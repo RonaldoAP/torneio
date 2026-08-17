@@ -65,20 +65,52 @@ create table if not exists config (
 insert into config (id) values (1) on conflict (id) do nothing;
 
 -- ----------------------------------------------------------------------------
+-- EDIÇÕES (1ª Copa Costela, 2ª, ...)
+--  Cada jogador/partida pertence a uma edição. O site mostra a edição em cartaz
+--  (config.current_edition) e as anteriores ficam em /historico.
+--  Este bloco é idempotente: pode rodar em banco novo ou já existente.
+-- ----------------------------------------------------------------------------
+create table if not exists editions (
+  id          int primary key,               -- 1, 2, 3...
+  name        text not null default 'Copa Costela',
+  event_date  text,                          -- "18 de julho"
+  event_time  text,                          -- "10h"
+  event_local text,                          -- "Casa do Léo"
+  event_note  text,
+  created_at  timestamptz not null default now(),
+  closed_at   timestamptz                    -- preenchido ao arquivar
+);
+
+alter table players add column if not exists edition int not null default 1;
+alter table matches add column if not exists edition int not null default 1;
+alter table config  add column if not exists current_edition int not null default 1;
+
+create index if not exists players_edition_idx on players(edition);
+create index if not exists matches_edition_idx on matches(edition);
+
+-- Registra a 1ª edição a partir do que já existe (não sobrescreve se já houver).
+insert into editions (id, name)
+select 1, coalesce((select tournament_name from config where id = 1), 'Copa Costela')
+on conflict (id) do nothing;
+
+-- ----------------------------------------------------------------------------
 -- RLS: leitura pública anônima; escrita bloqueada (só service_role grava)
 -- ----------------------------------------------------------------------------
-alter table players enable row level security;
-alter table matches enable row level security;
-alter table config  enable row level security;
+alter table players  enable row level security;
+alter table matches  enable row level security;
+alter table config   enable row level security;
+alter table editions enable row level security;
 
 -- Limpa policies antigas (idempotente)
-drop policy if exists "public read players" on players;
-drop policy if exists "public read matches" on matches;
-drop policy if exists "public read config"  on config;
+drop policy if exists "public read players"  on players;
+drop policy if exists "public read matches"  on matches;
+drop policy if exists "public read config"   on config;
+drop policy if exists "public read editions" on editions;
 
-create policy "public read players" on players for select using (true);
-create policy "public read matches" on matches for select using (true);
-create policy "public read config"  on config  for select using (true);
+create policy "public read players"  on players  for select using (true);
+create policy "public read matches"  on matches  for select using (true);
+create policy "public read config"   on config   for select using (true);
+create policy "public read editions" on editions for select using (true);
 
 -- Sem policies de INSERT/UPDATE/DELETE para anon/authenticated => escrita negada.
 -- A service_role key (usada no servidor) ignora o RLS e faz as gravações.
@@ -98,7 +130,12 @@ do $$ begin
   alter publication supabase_realtime add table config;
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  alter publication supabase_realtime add table editions;
+exception when duplicate_object then null; end $$;
+
 -- Necessário para receber os valores antigos em UPDATE/DELETE via realtime
-alter table players replica identity full;
-alter table matches replica identity full;
-alter table config  replica identity full;
+alter table players  replica identity full;
+alter table matches  replica identity full;
+alter table config   replica identity full;
+alter table editions replica identity full;

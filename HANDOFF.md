@@ -18,9 +18,11 @@ a "Copa Costela". Mostra, ao vivo, para todos os participantes:
   dispositivo de todo mundo (realtime).
 - Um **telão** (`/tv`) em tela cheia que roda sozinho (slideshow) para projetar
   num telão/TV durante o evento.
+- Um **histórico** (`/historico`) com as **edições anteriores** — cada uma com
+  pódio, classificação final, chave e artilharia congelados.
 
-Evento: **18 de julho, 10h, Casa do Léo.** Formato de liga (turno único, todos
-contra todos) + mata-mata dos 6 primeiros.
+1ª edição: **18 de julho de 2026, 10h, Casa do Léo.** Formato de liga (turno
+único, todos contra todos) + mata-mata dos 6 primeiros.
 
 **Produção:** https://copa-costela.vercel.app (Vercel) · banco no Supabase.
 
@@ -64,15 +66,16 @@ ADMIN_SLUG=<slug secreta do painel de admin>
 
 ## 4. Deploy e fluxo de branches
 
-- **Desenvolva na branch** `claude/fifa-26-tournament-app-sshkzh`.
+- **Desenvolva numa branch de trabalho** (a última foi
+  `claude/github-atualizacao-historicos-d0s0vm`; antes, `claude/fifa-26-tournament-app-sshkzh`).
 - Para publicar: **fast-forward merge para `main`** e push. A Vercel faz
   **auto-deploy a partir de `main`**.
   ```bash
-  git push -u origin claude/fifa-26-tournament-app-sshkzh
+  git push -u origin <sua-branch>
   git fetch origin main && git checkout -B main origin/main
-  git merge --ff-only claude/fifa-26-tournament-app-sshkzh
+  git merge --ff-only <sua-branch>
   git push -u origin main
-  git checkout claude/fifa-26-tournament-app-sshkzh
+  git checkout <sua-branch>
   ```
 - **Gotcha da Vercel:** ela pode reusar o *build cache* e **não re-injetar** as
   variáveis `NEXT_PUBLIC_*`. Se mudar uma env pública, faça um deploy **sem
@@ -101,10 +104,16 @@ ADMIN_SLUG=<slug secreta do painel de admin>
   (plano Pro) antes de um próximo evento.
 
 ### Tabelas (resumo)
-- **`players`**: `id` (uuid), `name`, `created_at`, `photo` (data URI ou null).
+- **`players`**: `id` (uuid), `name`, `created_at`, `photo` (data URI ou null), `edition`.
 - **`matches`**: `id`, `stage`, `round`, `home_id`, `away_id`, `home_goals`,
-  `away_goals`, `pen_winner_id`, `counts_for_scorers`, `slot`, `created_at`.
-- **`config`** (linha única id=1): `tournament_name`, `phase`, `bracket_seeded`.
+  `away_goals`, `pen_winner_id`, `counts_for_scorers`, `slot`, `created_at`, `edition`.
+- **`config`** (linha única id=1): `tournament_name`, `phase`, `bracket_seeded`,
+  `current_edition` (a edição que o site mostra).
+- **`editions`**: `id` (1, 2, 3...), `name`, `event_date`, `event_time`, `event_local`,
+  `event_note`, `created_at`, `closed_at` (preenchido ao arquivar).
+
+> `supabase-schema.sql` é **idempotente** — rodá-lo de novo aplica a migração das
+> edições no banco existente sem perder nada (`edition` entra com default 1).
 
 `stage` ∈ `liga | quartas | semi | final | terceiro | desempate`.
 `slot` (só no mata-mata) ∈ `REP_A | REP_B | SF_A | SF_B | FINAL | TERCEIRO`.
@@ -141,6 +150,7 @@ src/lib/
   supabase/admin.ts   # cliente servidor (service_role)
   roundRobin.ts       # sorteio круг (circle method) + orderForRest (descanso)
   drawConstraints.ts  # sorteio "equilibrado" com restrições OCULTAS (backend)
+  editions.ts         # edições: filtro, resumo do histórico e blindagem do remover
   standings.ts        # classificação + desempates (6 critérios) + TOP_N=6
   bracket.ts          # mata-mata Alternativa B (seed/recompute/campeão)
   scorers.ts          # artilharia
@@ -155,6 +165,7 @@ src/app/
   classificacao/      # classificação estilo GloboEsporte
   mata-mata/          # chave (organograma) + prévia ao vivo
   goleadores/         # artilharia
+  historico/          # edições anteriores (lista) e /historico/<n> (edição arquivada)
   tv/                 # TELÃO: slideshow em tela cheia, auto-rotativo
   admin/page.tsx      # admin em modo LOCAL (quando ADMIN_SLUG não está setado)
   painel/[slug]/      # admin em modo Supabase (valida a slug no servidor)
@@ -220,6 +231,34 @@ No Supabase, o `created_at` é gravado crescente para a leitura preservar essa o
 
 ---
 
+## 7-B. Edições (1ª, 2ª, ...) e o histórico
+
+Cada torneio é uma **edição**. Toda linha de `players` e `matches` carrega o número
+da edição a que pertence; o site mostra **só a edição em cartaz**
+(`config.current_edition`) e as anteriores ficam em `/historico`.
+
+- **Abrir a próxima edição** (painel → *Edição em cartaz*): a atual recebe
+  `closed_at` e vira histórico (só leitura); a nova nasce zerada — sem jogos, sem
+  placares — com a opção de **levar a mesma turma** (participantes novos, com foto;
+  ids próprios, então mexer na nova edição nunca encosta no histórico).
+- **Desfazer a abertura:** enquanto a edição nova **não tiver jogos**, o painel
+  oferece voltar para a anterior (`discard_edition`). Depois do sorteio, não.
+- **Data / hora / local** deixaram de ser código: ficam em `editions` e são
+  editáveis no painel (`set_edition_meta`). `EVENT` em `src/lib/config.ts` virou
+  apenas o **fallback** da 1ª edição.
+- **Toda ação de escrita é escopada pela edição em cartaz** — sortear, zerar
+  placares, W.O., montar mata-mata, importar backup. Nada alcança uma edição
+  arquivada. Se mudar alguma ação, mantenha esse escopo nos **dois** lados
+  (`route.ts` e `adminActions.ts`) — há testes cobrindo isso em
+  `src/lib/__tests__/localEditions.test.ts`.
+- **Backup (JSON):** exporta/importa **a edição em cartaz**. Um JSON com a chave
+  `editions` é tratado como backup completo e restaura tudo.
+- **Banco sem a migração:** o app detecta e roda como antes (uma edição só), para
+  não quebrar entre o deploy e o `supabase-schema.sql`. As ações de edição avisam
+  que falta rodar a migração.
+
+---
+
 ## 8. Painel de admin
 
 - **Acesso:** `https://<site>/painel/<ADMIN_SLUG>` (sem senha — **quem tem o link
@@ -229,7 +268,12 @@ No Supabase, o `created_at` é gravado crescente para a leitura preservar essa o
   e **fotos**; **sortear confrontos**; **montar mata-mata (Top 6)**; lançar
   placares (liga, desempate, mata-mata); registrar **desistência (W.O.)**;
   **zerar todos os placares**; encerrar/reabrir; **exportar/importar JSON** (backup).
-- **Desfazer:** ações destrutivas (zerar, sortear, montar mata-mata, desistência)
+- **Remover participante (blindado):** remover apaga também **todos os jogos** da
+  pessoa. Com partidas na mesa, o painel mostra quantas somem (e quantas já têm
+  placar), lembra que **Desistência (W.O.)** preserva os jogos, e só apaga após
+  confirmação — com **Desfazer** disponível. Ver `removalBlockedMessage` em
+  `src/lib/editions.ts`; o servidor rejeita com **409** sem `force`.
+- **Desfazer:** ações destrutivas (zerar, sortear, montar mata-mata, desistência, remover)
   tiram um "retrato" do estado antes e mostram um botão **Desfazer** que restaura
   via import de estado.
 - **Copiar mensagem pro grupo:** botão que gera a classificação + artilharia
@@ -266,7 +310,8 @@ UI (admin) ──> adminActions.run(action, payload)
 ```
 Ações existentes: `set_config, add_player, remove_player, set_photo, reset_scores,
 generate_league, save_score, create_desempate, delete_match, withdraw,
-seed_bracket, close_tournament, reopen, import_state, reset_local`.
+seed_bracket, close_tournament, reopen, set_edition_meta, new_edition,
+discard_edition, import_state, reset_local`.
 
 ---
 
@@ -291,6 +336,10 @@ seed_bracket, close_tournament, reopen, import_state, reset_local`.
     **copiar mensagem pro grupo**.
 14. **Confrontos e Placares—Liga:** rodada atual no topo, encerradas embaixo.
 15. **Telão `/tv`**: slideshow auto-rotativo, durações por tela, polling de 6s.
+16. **Edições + histórico**: `editions` no banco, `edition` em players/matches,
+    arquivar/abrir edição no painel, `/historico` e `/historico/<n>` (pódio,
+    classificação final, chave e artilharia), dados do evento editáveis no painel.
+17. **Blindagem do "Remover participante"** (o footgun do incidente do Mosquito).
 
 ---
 
@@ -316,9 +365,9 @@ memória: **Riquelme 18×0 Mosquito** e **Léo 9×2 Mosquito** → somando aos t
 Mosquito. Os outros 8 jogos do Mosquito continuam perdidos.
 
 **Lições / TODO desta história:**
-- **BLINDAR o botão "Remover"** (ainda não feito): se o jogador já tem partidas,
-  deve **avisar/bloquear** em vez de apagar em silêncio. Ver `remove_player` em
-  `adminActions.ts` (local) e `route.ts` (servidor) — hoje ambos deletam os jogos.
+- ~~**BLINDAR o botão "Remover"**~~ — **feito**: com partidas na mesa, o painel
+  avisa quantas somem, aponta a **Desistência (W.O.)** como caminho certo e só
+  apaga após confirmação; o servidor recusa com **409** sem `force`.
 - **Habilitar backups/PITR** no Supabase antes do próximo evento.
 - Existe um **backup manual** do estado pós-incidente (JSON exportado) — guardar
   sempre um export antes de qualquer ação destrutiva.
@@ -327,7 +376,8 @@ Mosquito. Os outros 8 jogos do Mosquito continuam perdidos.
 
 ## 13. Pendências e próximos passos recomendados
 
-- [ ] **Blindar `remove_player`** (footgun que causou o incidente do Mosquito).
+- [x] ~~**Blindar `remove_player`**~~ — feito: avisa quantos jogos somem, sugere o
+      W.O. e exige confirmação (servidor devolve 409 sem `force`).
 - [ ] Confirmar/registrar oficialmente a **artilharia** (Léo campeão) — se quiser
       número exato no site, dá pra reinserir os jogos conhecidos do Mosquito, mas
       isso deixa a classificação inconsistente enquanto os outros 8 faltarem.
