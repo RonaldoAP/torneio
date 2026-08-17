@@ -37,13 +37,12 @@ export function MatchRow({
     played &&
     ((awayGoals as number) > (homeGoals as number) ||
       (tie && !!penWinnerId && penWinnerId === away?.id));
-  const bothPresent = !!home && !!away;
-
+  
   // No telão o avatar vem grande; nome e placar acompanham a escala, senão não
   // se lê de longe.
   const grande = avatarSize >= 56;
-  const nameSize = grande ? "text-3xl sm:text-5xl" : "text-xl sm:text-2xl";
-  const scoreSize = grande ? "text-5xl sm:text-7xl" : "text-3xl sm:text-4xl";
+  const nameSize = grande ? "text-4xl sm:text-6xl" : "text-2xl sm:text-3xl";
+  const scoreSize = grande ? "text-6xl sm:text-8xl" : "text-4xl sm:text-5xl";
 
   const nameCls = (win: boolean, lose: boolean, present: boolean) =>
     `truncate font-display font-bold uppercase tracking-wide ${nameSize} ${
@@ -77,21 +76,19 @@ export function MatchRow({
           <Avatar name={home?.name ?? "?"} photo={home?.photo} size={avatarSize} />
         </div>
 
-        {/* placar */}
+        {/* placar: sempre "gols x gols", como na referência — sem "VS" */}
         <div className="shrink-0 text-center">
-          {played ? (
-            <span className={`font-display leading-none ${scoreSize}`}>
-              <span className={scoreCls(homeWin, awayWin)}>{homeGoals}</span>
-              <span className="mx-1.5 align-middle text-[0.42em] text-ink-muted sm:mx-2.5">×</span>
-              <span className={scoreCls(awayWin, homeWin)}>{awayGoals}</span>
+          <span className={`font-display font-bold leading-none ${scoreSize}`}>
+            <span className={played ? scoreCls(homeWin, awayWin) : "text-ink-muted/40"}>
+              {homeGoals ?? "–"}
             </span>
-          ) : bothPresent ? (
-            <span className="rounded border border-white/15 px-2.5 py-1 font-display text-sm tracking-[0.2em] text-ink-muted">
-              VS
+            <span className="mx-2 align-middle text-[0.36em] font-normal text-ink-muted sm:mx-3">
+              x
             </span>
-          ) : (
-            <span className="text-ink-muted/40">·</span>
-          )}
+            <span className={played ? scoreCls(awayWin, homeWin) : "text-ink-muted/40"}>
+              {awayGoals ?? "–"}
+            </span>
+          </span>
         </div>
 
         {/* visitante: foto + nome */}

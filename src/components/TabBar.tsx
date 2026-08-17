@@ -55,11 +55,9 @@ export function TabBar() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-base/70 backdrop-blur-xl">
       <div ref={boxRef} className="relative mx-auto max-w-5xl px-3 sm:px-4">
         <div className="flex items-center justify-between gap-3 py-3">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-lg border border-azul/40 bg-azul/15 font-display text-xl text-azul">
-              C
-            </span>
-            <span className="font-display text-2xl tracking-wide text-ink">Copa Costela</span>
+          <Link href="/" className="flex shrink-0 items-center" aria-label="Copa Costela — início">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Copa Costela" className="h-9 w-auto sm:h-11" />
           </Link>
 
           <div className="flex items-center gap-3">

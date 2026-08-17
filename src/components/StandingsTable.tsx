@@ -22,12 +22,20 @@ export function StandingsTable({
   const rows = computeStandings(players, matches);
   const photoById = new Map(players.map((p) => [p.id, p.photo] as const));
 
+  // No telão tudo precisa caber sem rolagem: com 12 participantes a linha
+  // encolhe sozinha em vez de empurrar a tabela para fora da tela.
+  const apertado = big && rows.length > 10;
+  const medio = big && rows.length > 8 && rows.length <= 10;
+  const fotoTam = big ? (apertado ? 38 : medio ? 44 : 52) : 40;
+  const nomeTam = big ? (apertado ? "text-2xl" : medio ? "text-3xl" : "text-4xl") : "text-2xl";
+  const numTam = big ? (apertado ? "text-xl" : "text-3xl") : "text-lg";
+  const ptsTam = big ? (apertado ? "text-2xl" : "text-4xl") : "text-xl";
+  const linhaPad = big ? (apertado ? "py-1.5" : medio ? "py-2.5" : "py-4") : "py-3";
+
   const th = `px-2 py-2.5 font-display font-semibold uppercase tracking-[0.12em] text-ink-muted ${
     big ? "text-base" : "text-[11px]"
   }`;
-  const num = `px-2 text-center font-display tabular text-ink ${
-    big ? "py-4 text-3xl" : "py-3 text-lg"
-  }`;
+  const num = `px-2 text-center font-display tabular text-ink ${linhaPad} ${numTam}`;
 
   return (
     <div className="panel overflow-x-auto">
@@ -67,13 +75,13 @@ export function StandingsTable({
                 <td className="py-2 pl-0">
                   <span className="flex items-center">
                     <span
-                      className={`rounded-r ${big ? "h-14 w-1.5" : "h-11 w-1"} ${
+                      className={`${big ? (apertado ? "h-9 w-1.5" : "h-14 w-1.5") : "h-11 w-1"} ${
                         qualified ? "bg-azul" : "bg-ink-muted/25"
                       }`}
                     />
                     <span
                       className={`ml-2 w-7 text-center font-display font-bold tabular ${
-                        big ? "text-3xl" : "text-xl"
+                        big ? (apertado ? "text-2xl" : "text-3xl") : "text-xl"
                       }`}
                       // classificado em azul, quem está fora em branco
                       style={{ color: qualified ? "#3E9BE9" : "#FFFFFF" }}
@@ -84,13 +92,11 @@ export function StandingsTable({
                 </td>
 
                 {/* escudo (foto) + nome em caixa alta */}
-                <td className={`px-2 text-left ${big ? "py-4" : "py-3"}`}>
+                <td className={`px-2 text-left ${linhaPad}`}>
                   <span className="flex items-center gap-2.5">
-                    <Avatar name={r.name} photo={photoById.get(r.playerId)} size={big ? 52 : 40} />
+                    <Avatar name={r.name} photo={photoById.get(r.playerId)} size={fotoTam} />
                     <span
-                      className={`truncate font-display font-bold uppercase tracking-wide text-ink ${
-                        big ? "text-4xl" : "text-2xl"
-                      }`}
+                      className={`truncate font-display font-bold uppercase tracking-wide text-ink ${nomeTam}`}
                     >
                       {r.name}
                     </span>
@@ -105,7 +111,7 @@ export function StandingsTable({
                   </span>
                 </td>
 
-                <td className={`${num} font-black text-branco ${big ? "text-4xl" : "text-xl"}`}>
+                <td className={`${num} font-black text-branco ${ptsTam}`}>
                   {r.points}
                 </td>
                 <td className={`${num} text-ink-muted`}>{r.played}</td>

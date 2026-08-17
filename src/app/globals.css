@@ -35,6 +35,14 @@ body::before {
   background-repeat: no-repeat;
 }
 
+/* Sem cantos arredondados em lugar nenhum — decisão de identidade do torneio.
+   Fica como regra única aqui para não depender de cada componente lembrar. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
 @layer base {
   h1,
   h2,

@@ -33,7 +33,7 @@ function Barra({
   isPenWinner,
   h,
   placeholder = "A definir",
-  destaque,
+  espelhado = false,
 }: {
   player?: Player;
   goals?: number | null;
@@ -42,58 +42,77 @@ function Barra({
   isPenWinner?: boolean;
   h: number;
   placeholder?: string;
-  destaque?: boolean;
+  /** lado direito da chave: foto e placar viram para dentro (à esquerda) */
+  espelhado?: boolean;
 }) {
-  const fundo = destaque
-    ? "border-azul/60 bg-azul/15"
-    : state === "winner"
+  const fundo =
+    state === "winner"
       ? "border-emerald-400/45 bg-emerald-400/[0.08]"
       : "border-white/10 bg-[#08172B]/70";
 
+  const nome = (
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-2 border backdrop-blur-md ${fundo} ${
+        state === "loser" ? "opacity-45" : ""
+      } ${espelhado ? "flex-row-reverse text-right" : ""}`}
+      style={{ paddingInline: h * 0.26 }}
+    >
+      {seed && (
+        <span
+          className="shrink-0 font-display font-bold leading-none text-azul"
+          style={{ fontSize: h * 0.3 }}
+        >
+          {seed}
+        </span>
+      )}
+      <span
+        className={`min-w-0 flex-1 truncate font-display font-bold uppercase leading-none tracking-wide ${
+          state === "winner" ? "text-branco" : player ? "text-ink" : "text-ink-muted/40"
+        }`}
+        style={{ fontSize: h * 0.46 }}
+      >
+        {player?.name ?? placeholder}
+      </span>
+      {isPenWinner && (
+        <span
+          className="shrink-0 font-display uppercase leading-none tracking-widest text-cyan"
+          style={{ fontSize: h * 0.24 }}
+        >
+          pên
+        </span>
+      )}
+    </div>
+  );
+
+  const foto = <Avatar name={player?.name ?? "?"} photo={player?.photo} size={h} />;
+
+  const placar = (
+    <span
+      className={`grid shrink-0 place-items-center border-y border-white/10 font-display font-bold leading-none tabular ${
+        espelhado ? "border-l" : "border-r"
+      } ${state === "winner" ? "bg-emerald-400 text-base" : "bg-[#08172B]/70 text-ink"}`}
+      style={{ width: h * 0.8, fontSize: h * 0.46 }}
+    >
+      <span className={goals == null ? "text-ink-muted/40" : ""}>{goals ?? "–"}</span>
+    </span>
+  );
+
+  // No lado direito a ordem inverte, para foto e placar ficarem virados ao centro.
   return (
     <div className="flex items-stretch" style={{ height: h }}>
-      <div
-        className={`flex min-w-0 flex-1 items-center gap-2 border backdrop-blur-md ${fundo} ${
-          state === "loser" ? "opacity-45" : ""
-        }`}
-        style={{ paddingInline: h * 0.28 }}
-      >
-        {seed && (
-          <span
-            className="shrink-0 font-display font-bold leading-none text-azul"
-            style={{ fontSize: h * 0.3 }}
-          >
-            {seed}
-          </span>
-        )}
-        <span
-          className={`truncate font-display font-bold uppercase leading-none tracking-wide ${
-            state === "winner" ? "text-branco" : player ? "text-ink" : "text-ink-muted/40"
-          }`}
-          style={{ fontSize: h * 0.46 }}
-        >
-          {player?.name ?? placeholder}
-        </span>
-        {isPenWinner && (
-          <span
-            className="ml-auto shrink-0 font-display uppercase leading-none tracking-widest text-cyan"
-            style={{ fontSize: h * 0.24 }}
-          >
-            pên
-          </span>
-        )}
-      </div>
-
-      <Avatar name={player?.name ?? "?"} photo={player?.photo} size={h} />
-
-      <span
-        className={`grid shrink-0 place-items-center border-y border-r border-white/10 font-display leading-none tabular ${
-          state === "winner" ? "bg-emerald-400 text-base" : "bg-[#08172B]/70 text-ink"
-        }`}
-        style={{ width: h * 0.82, fontSize: h * 0.46 }}
-      >
-        {goals ?? ""}
-      </span>
+      {espelhado ? (
+        <>
+          {placar}
+          {foto}
+          {nome}
+        </>
+      ) : (
+        <>
+          {nome}
+          {foto}
+          {placar}
+        </>
+      )}
     </div>
   );
 }
@@ -131,187 +150,206 @@ export function Bracket({
   const { championId, runnerUpId } = championAndRunnerUp(matches);
   const third = thirdPlace(matches);
 
+  // ---- geometria ----
   const H = big ? 58 : 44; // altura da barra
+  const GAP = big ? 12 : 9; // entre as duas barras de um confronto
+
+  const yRep0 = 0;
+  const yRep1 = H + GAP;
+  const cRep = yRep1 - GAP / 2; // centro do confronto da repescagem
+
+  const ySemiVenc = cRep - H / 2; // quem subiu entra alinhado com a repescagem
+  const ySemiHead = ySemiVenc - GAP - H; // cabeça de chave logo acima
+  const cSemi = ySemiHead + H + GAP / 2; // centro da semifinal = altura do troféu
+
+  const desloca = -Math.min(ySemiHead, 0);
+  const altura = yRep1 + H + desloca;
+
+  // colunas em % (lado esquerdo; o direito espelha por 100 - x)
+  const C1 = { x: 0, w: 20.5 };
+  const C2 = { x: 24, w: 20.5 };
+  const JOIN1 = 22.2;
+  const JOIN2 = 46.4;
+  const CENTRO = 47.6;
+
+  const esp = (x: number) => 100 - x; // espelha um ponto
+  const espCol = (c: { x: number; w: number }) => ({ x: 100 - c.x - c.w, w: c.w });
 
   const finalM = bySlot("FINAL");
+  const finalCasa = sideOf(finalM, "home");
+  const finalFora = sideOf(finalM, "away");
+  const finalJogado = finalM?.home_goals != null && finalM?.away_goals != null;
 
-  /** Confronto: as duas barras e o traço que leva ao vencedor. */
-  function Confronto({
-    match,
-    seeds,
-    placeholders,
-    label,
-  }: {
-    match?: Match;
-    seeds?: [string?, string?];
-    placeholders?: [string?, string?];
-    label: string;
-  }) {
-    const casa = sideOf(match, "home");
-    const fora = sideOf(match, "away");
+  const caixa = (col: { x: number; w: number }, y: number) => ({
+    position: "absolute" as const,
+    left: `${col.x}%`,
+    width: `${col.w}%`,
+    top: y + desloca,
+  });
+
+  /** Colchete que junta duas barras e sai para a fase seguinte. */
+  const colchete = (yA: number, yB: number, xDe: number, xJoin: number, xAte: number) =>
+    `M ${xDe} ${yA + desloca} H ${xJoin} V ${yB + desloca} H ${xDe} M ${xJoin} ${
+      (yA + yB) / 2 + desloca
+    } H ${xAte}`;
+
+  const linhas = [
+    // esquerda
+    colchete(yRep0 + H / 2, yRep1 + H / 2, C1.x + C1.w, JOIN1, C2.x),
+    colchete(ySemiHead + H / 2, ySemiVenc + H / 2, C2.x + C2.w, JOIN2, CENTRO),
+    // direita (espelhada)
+    colchete(yRep0 + H / 2, yRep1 + H / 2, esp(C1.x + C1.w), esp(JOIN1), esp(C2.x)),
+    colchete(ySemiHead + H / 2, ySemiVenc + H / 2, esp(C2.x + C2.w), esp(JOIN2), esp(CENTRO)),
+  ];
+
+  /** Um lado da chave: repescagem (col 1) e semifinal (col 2). */
+  function Lado({ lado }: { lado: "A" | "B" }) {
+    const dir = lado === "B";
+    const rep = bySlot(dir ? "REP_B" : "REP_A");
+    const sf = bySlot(dir ? "SF_B" : "SF_A");
+    const seeds = dir ? { a: "3º", b: "6º", head: "2º" } : { a: "4º", b: "5º", head: "1º" };
+    const col1 = dir ? espCol(C1) : C1;
+    const col2 = dir ? espCol(C2) : C2;
+
     return (
-      <div>
-        <div className="mb-1.5 font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
-          {label}
+      <>
+        <div style={caixa(col1, yRep0)}>
+          <Barra {...sideOf(rep, "home")} player={get(sideOf(rep, "home").id)} seed={seeds.a} h={H} espelhado={dir} />
         </div>
-        <div className="relative flex flex-col gap-1.5">
+        <div style={caixa(col1, yRep1)}>
+          <Barra {...sideOf(rep, "away")} player={get(sideOf(rep, "away").id)} seed={seeds.b} h={H} espelhado={dir} />
+        </div>
+        <div style={caixa(col2, ySemiHead)}>
+          <Barra {...sideOf(sf, "home")} player={get(sideOf(sf, "home").id)} seed={seeds.head} h={H} espelhado={dir} />
+        </div>
+        <div style={caixa(col2, ySemiVenc)}>
           <Barra
-            {...casa}
-            player={get(casa.id)}
-            seed={seeds?.[0]}
+            {...sideOf(sf, "away")}
+            player={get(sideOf(sf, "away").id)}
             h={H}
-            placeholder={placeholders?.[0] ?? "A definir"}
-          />
-          <Barra
-            {...fora}
-            player={get(fora.id)}
-            seed={seeds?.[1]}
-            h={H}
-            placeholder={placeholders?.[1] ?? "A definir"}
-          />
-          {/* colchete: junta as duas barras e aponta para a fase seguinte */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -right-4 top-[25%] hidden h-1/2 w-3 rounded-r border-y border-r border-white/25 sm:block"
+            placeholder="Repescagem"
+            espelhado={dir}
           />
         </div>
-      </div>
+      </>
     );
   }
 
-  /** Um lado da chave: repescagem em cima, semifinal embaixo. */
-  function Chave({ lado }: { lado: "A" | "B" }) {
-    const rep = bySlot(lado === "A" ? "REP_A" : "REP_B");
-    const sf = bySlot(lado === "A" ? "SF_A" : "SF_B");
-    const venc = sf ? matchWinner(sf) : null;
-    return (
-      <section className="panel p-4 sm:p-5">
-        <h3 className="mb-4 flex items-center gap-2 font-display text-2xl font-bold uppercase tracking-wide text-ink">
-          <span className="grid h-7 w-7 place-items-center rounded border border-azul/40 bg-azul/15 text-lg text-azul">
-            {lado}
-          </span>
-          Chave {lado}
-        </h3>
-
-        <div className="space-y-5 pr-4 sm:pr-6">
-          <Confronto
-            match={rep}
-            label="Repescagem"
-            seeds={lado === "A" ? ["4º", "5º"] : ["3º", "6º"]}
-          />
-
-          <div className="flex items-center gap-2 pl-1 text-ink-muted/70">
-            <span className="font-display text-[11px] uppercase tracking-[0.25em]">
-              vencedor sobe
-            </span>
-            <span aria-hidden>↓</span>
-          </div>
-
-          <Confronto
-            match={sf}
-            label="Semifinal"
-            seeds={lado === "A" ? ["1º"] : ["2º"]}
-            placeholders={[undefined, "Venc. repescagem"]}
-          />
-        </div>
-
-        <p className="mt-4 border-t border-line pt-3 font-display text-sm uppercase tracking-widest text-ink-muted">
-          Finalista:{" "}
-          <span className={venc ? "text-branco" : "text-ink-muted/50"}>
-            {venc ? get(venc)?.name : "a definir"}
-          </span>
-        </p>
-      </section>
-    );
-  }
+  const rotulo = (t: string, extra = "") => (
+    <span className={`font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70 ${extra}`}>
+      {t}
+    </span>
+  );
 
   return (
     <div className="space-y-5">
-      {/* ================= TELÃO / DESKTOP ================= */}
-      <div className="hidden space-y-5 md:block">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <Chave lado="A" />
-          <Chave lado="B" />
+      {/* ================= TELÃO / DESKTOP: chave espelhada ================= */}
+      <div className="hidden md:block">
+        <div className="mb-3 flex items-start justify-between">
+          <div>
+            <div className="font-display text-xl font-bold uppercase tracking-[0.2em] text-azul">
+              Chave A
+            </div>
+            {rotulo("Repescagem · Semifinal")}
+          </div>
+          <div className="text-right">
+            <div className="font-display text-xl font-bold uppercase tracking-[0.2em] text-azul">
+              Chave B
+            </div>
+            {rotulo("Semifinal · Repescagem")}
+          </div>
         </div>
 
-        {/* Final: sai das duas chaves */}
-        <section className="panel p-5">
-          <h3 className="mb-4 text-center font-display text-2xl font-bold uppercase tracking-[0.2em] text-azul">
-            Final
-          </h3>
-          <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto_1fr]">
-            <div className="space-y-1.5">
-              <Barra
-                {...sideOf(finalM, "home")}
-                player={get(sideOf(finalM, "home").id)}
-                h={H}
-                placeholder="Venc. chave A"
+        <div className="relative" style={{ height: altura }}>
+          <svg
+            className="pointer-events-none absolute inset-0 h-full w-full"
+            viewBox={`0 0 100 ${altura}`}
+            preserveAspectRatio="none"
+          >
+            {linhas.map((d, i) => (
+              <path
+                key={i}
+                d={d}
+                fill="none"
+                stroke="rgba(234,240,255,0.4)"
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
               />
-              <Barra
-                {...sideOf(finalM, "away")}
-                player={get(sideOf(finalM, "away").id)}
-                h={H}
-                placeholder="Venc. chave B"
-              />
-            </div>
+            ))}
+          </svg>
 
-            <div className="flex flex-col items-center justify-center px-4">
-              <div
-                className="select-none leading-none"
-                style={{
-                  fontSize: big ? 74 : 56,
-                  filter: "drop-shadow(0 10px 30px rgba(62,155,233,0.45))",
-                }}
-              >
-                🏆
-              </div>
-              <div className="mt-1 font-display text-[11px] uppercase tracking-[0.34em] text-ink-muted">
-                Campeão
-              </div>
-              <div
-                className={`font-display font-black uppercase tracking-wide ${
-                  championId ? "text-branco" : "text-ink-muted/50"
-                }`}
-                style={{ fontSize: big ? 42 : 30 }}
-              >
-                {championId ? get(championId)?.name : "a definir"}
-              </div>
-              {championId && runnerUpId && (
-                <div className="font-display text-sm uppercase tracking-widest text-ink-muted">
-                  vice: {get(runnerUpId)?.name}
-                </div>
-              )}
-            </div>
+          <Lado lado="A" />
+          <Lado lado="B" />
 
-            {/* 3º lugar ao lado: é decidido antes da final */}
-            <div>
-              <div className="mb-1.5 font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
-                🥉 Disputa de 3º lugar
-              </div>
-              <div className="space-y-1.5">
-                <Barra
-                  {...sideOf(bySlot("TERCEIRO"), "home")}
-                  player={get(sideOf(bySlot("TERCEIRO"), "home").id)}
-                  h={H}
-                  placeholder="Perd. semi A"
-                />
-                <Barra
-                  {...sideOf(bySlot("TERCEIRO"), "away")}
-                  player={get(sideOf(bySlot("TERCEIRO"), "away").id)}
-                  h={H}
-                  placeholder="Perd. semi B"
-                />
-              </div>
-              {third && (
-                <p className="mt-2 font-display text-sm uppercase tracking-widest text-ink-muted">
-                  3º lugar: <span className="text-ink">{get(third)?.name}</span>
-                </p>
-              )}
+          {/* centro: troféu, placar da final e campeão */}
+          <div
+            className="absolute flex flex-col items-center text-center"
+            style={{
+              left: "50%",
+              top: cSemi + desloca,
+              width: "12%",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <div
+              className="select-none leading-none"
+              style={{
+                fontSize: big ? 76 : 58,
+                filter: "drop-shadow(0 10px 30px rgba(62,155,233,0.5))",
+              }}
+            >
+              🏆
             </div>
+            <div className="mt-1 font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted">
+              Final
+            </div>
+            <div
+              className="font-display font-bold leading-none text-branco"
+              style={{ fontSize: big ? 38 : 28 }}
+            >
+              <span className={finalJogado ? "" : "text-ink-muted/40"}>
+                {finalCasa.goals ?? "–"}
+              </span>
+              <span className="mx-1.5 align-middle text-[0.4em] font-normal text-ink-muted">x</span>
+              <span className={finalJogado ? "" : "text-ink-muted/40"}>
+                {finalFora.goals ?? "–"}
+              </span>
+            </div>
+            {championId && (
+              <div
+                className="mt-1 truncate font-display font-black uppercase tracking-wide text-branco"
+                style={{ fontSize: big ? 30 : 22 }}
+                title={get(championId)?.name}
+              >
+                {get(championId)?.name}
+              </div>
+            )}
           </div>
-        </section>
+        </div>
 
-        <p className="text-center text-xs text-ink-muted">
+        {/* 3º lugar fora da árvore: é decidido antes da final */}
+        <div className="mt-6 flex justify-center">
+          <div className="panel w-full max-w-2xl px-5 py-3">
+            <div className="mb-2 text-center font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
+              🥉 Disputa de 3º lugar
+            </div>
+            <MobileRow match={bySlot("TERCEIRO")} byId={byId} />
+            {third && (
+              <div className="pb-1 text-center font-display text-sm uppercase tracking-widest text-ink-muted">
+                3º lugar: <span className="text-ink">{get(third)?.name}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {championId && runnerUpId && (
+          <p className="mt-3 text-center font-display text-lg uppercase tracking-widest text-ink-muted">
+            Campeão <span className="text-branco">{get(championId)?.name}</span> · vice{" "}
+            <span className="text-ink">{get(runnerUpId)?.name}</span>
+          </p>
+        )}
+
+        <p className="mt-3 text-center text-xs text-ink-muted">
           1º e 2º entram direto na semifinal · empate no mata-mata → prorrogação → pênaltis. A chave
           avança sozinha a cada placar lançado.
         </p>

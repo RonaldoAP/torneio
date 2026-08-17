@@ -5,7 +5,7 @@ import { useTournament } from "@/lib/useTournament";
 import { StandingsTable } from "@/components/StandingsTable";
 import { Bracket } from "@/components/Bracket";
 import { MatchRow } from "@/components/MatchRow";
-import { LiveBadge, Avatar } from "@/components/ui";
+import { Avatar } from "@/components/ui";
 import { computeStandings } from "@/lib/standings";
 import { computeDefense, computeScorers } from "@/lib/scorers";
 import { seedBracket } from "@/lib/bracket";
@@ -167,18 +167,8 @@ function Slideshow({
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [clock, setClock] = useState("");
   const n = slides.length;
   const safeIndex = n > 0 ? index % n : 0;
-
-  // relógio ao vivo
-  useEffect(() => {
-    const tick = () =>
-      setClock(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
-    tick();
-    const id = setInterval(tick, 15000);
-    return () => clearInterval(id);
-  }, []);
 
   // avança sozinho — cada tela fica no ar pelo seu próprio tempo
   const currentMs = slides[safeIndex]?.ms ?? SLIDE_MS_DEFAULT;
@@ -214,23 +204,22 @@ function Slideshow({
     <div
       className="fixed inset-0 z-40 flex flex-col overflow-hidden"
       style={{
-        background:
-          "radial-gradient(1100px 560px at 50% -12%, rgba(59,91,255,0.22), transparent 62%), radial-gradient(900px 520px at 100% 0%, rgba(37,228,255,0.08), transparent 55%), #050A2C",
+        backgroundImage:
+          'radial-gradient(1200px 700px at 50% -8%, rgba(62,155,233,0.18), transparent 62%), linear-gradient(rgba(1,4,10,0.62), rgba(1,4,10,0.86) 55%, rgba(1,4,10,0.94)), url("/estadio.jpg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center 20%",
+        backgroundColor: "#01040A",
       }}
     >
       {/* Cabeçalho */}
-      <header className="flex items-center justify-between gap-4 px-6 pt-6 sm:px-10 sm:pt-8">
-        <div className="min-w-0">
-          <div className="font-display text-xs tracking-[0.35em] text-gremio sm:text-sm">
-            FIFA 26 · AO VIVO
-          </div>
-          <h1 className="truncate font-display text-3xl leading-none tracking-wide text-ink sm:text-5xl">
-            {config.tournament_name}
+      <header className="flex items-center justify-between gap-4 px-6 pt-4 sm:px-10 sm:pt-5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="h-2.5 w-2.5 shrink-0 animate-pulseAzul bg-azul" />
+          <h1 className="truncate font-display text-2xl uppercase leading-none tracking-[0.2em] text-ink sm:text-4xl">
+            {current?.label ?? ""}
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <span className="hidden font-display text-2xl tabular text-ink-muted sm:block">{clock}</span>
-          <LiveBadge mode={mode} connected={connected} />
           <button
             onClick={toggleFullscreen}
             className="btn-ghost px-3 py-2"
@@ -242,17 +231,11 @@ function Slideshow({
         </div>
       </header>
 
-      {/* Título da tela atual */}
-      <div className="flex items-center gap-3 px-6 pb-2 pt-4 sm:px-10">
-        <span className="h-2.5 w-2.5 animate-pulseAzul rounded-full bg-cyan" />
-        <span className="font-display text-lg uppercase tracking-[0.2em] text-cyan sm:text-2xl">
-          {current?.label ?? "—"}
-        </span>
-        {paused && <span className="chip border-branco/40 text-branco">pausado</span>}
-      </div>
-
-      {/* Conteúdo da tela */}
-      <div className="relative flex-1 overflow-auto px-4 pb-4 sm:px-10">
+      {/* Conteúdo da tela — sem rolagem: tudo precisa caber no telão */}
+      <div className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-4 py-3 sm:px-10">
+        {paused && (
+          <span className="absolute right-10 top-0 chip border-branco/40 text-branco">pausado</span>
+        )}
         {current ? (
           <div key={current.key} className="animate-reveal">
             {current.node}
