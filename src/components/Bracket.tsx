@@ -131,197 +131,187 @@ export function Bracket({
   const { championId, runnerUpId } = championAndRunnerUp(matches);
   const third = thirdPlace(matches);
 
-  // ---- geometria vertical (px) ----
-  const H = big ? 62 : 46; // altura da barra
-  const GAP_PAR = big ? 10 : 8; // entre as duas barras de um confronto
-  const GAP_CHAVE = big ? 64 : 48; // entre a chave de cima e a de baixo
+  const H = big ? 58 : 44; // altura da barra
 
-  const par = 2 * H + GAP_PAR; // altura de um confronto
-  const yRepA = 0;
-  const yRepB = par + GAP_CHAVE;
-  const cRepA = yRepA + par / 2; // centro do confronto REP_A
-  const cRepB = yRepB + par / 2;
-
-  // Semis: o vencedor da repescagem entra alinhado ao centro da repescagem;
-  // a cabeça de chave (1º/2º) fica logo acima dele.
-  const ySfA_risen = cRepA - H / 2;
-  const ySfA_head = ySfA_risen - GAP_PAR - H;
-  const ySfB_risen = cRepB - H / 2;
-  const ySfB_head = ySfB_risen - GAP_PAR - H;
-  const cSfA = (ySfA_head + ySfA_risen + H) / 2;
-  const cSfB = (ySfB_head + ySfB_risen + H) / 2;
-
-  // Final: cada finalista alinhado à sua semi. Campeão no meio dos dois.
-  const yFinA = cSfA - H / 2;
-  const yFinB = cSfB - H / 2;
-  const cFinal = (cSfA + cSfB) / 2;
-  const yCampeao = cFinal - H / 2;
-
-  const topo = Math.min(ySfA_head, 0); // as cabeças de chave sobem acima do zero
-  const altura = yRepB + par - topo;
-  const desloca = -topo; // empurra tudo para dentro do container
-
-  const repA = bySlot("REP_A");
-  const repB = bySlot("REP_B");
-  const sfA = bySlot("SF_A");
-  const sfB = bySlot("SF_B");
   const finalM = bySlot("FINAL");
 
-  /** Caixa posicionada numa coluna/linha da chave. */
-  const at = (col: number, y: number) => ({
-    position: "absolute" as const,
-    left: `${COL[col].x}%`,
-    width: `${COL[col].w}%`,
-    top: y + desloca,
-  });
+  /** Confronto: as duas barras e o traço que leva ao vencedor. */
+  function Confronto({
+    match,
+    seeds,
+    placeholders,
+    label,
+  }: {
+    match?: Match;
+    seeds?: [string?, string?];
+    placeholders?: [string?, string?];
+    label: string;
+  }) {
+    const casa = sideOf(match, "home");
+    const fora = sideOf(match, "away");
+    return (
+      <div>
+        <div className="mb-1.5 font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
+          {label}
+        </div>
+        <div className="relative flex flex-col gap-1.5">
+          <Barra
+            {...casa}
+            player={get(casa.id)}
+            seed={seeds?.[0]}
+            h={H}
+            placeholder={placeholders?.[0] ?? "A definir"}
+          />
+          <Barra
+            {...fora}
+            player={get(fora.id)}
+            seed={seeds?.[1]}
+            h={H}
+            placeholder={placeholders?.[1] ?? "A definir"}
+          />
+          {/* colchete: junta as duas barras e aponta para a fase seguinte */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-4 top-[25%] hidden h-1/2 w-3 rounded-r border-y border-r border-white/25 sm:block"
+          />
+        </div>
+      </div>
+    );
+  }
 
-  // ---- traços (x em %, y em px) ----
-  const fimCol = (c: number) => COL[c].x + COL[c].w;
-  const traco = (yA: number, yB: number, xDe: number, xPara: number) => {
-    const meio = (xDe + xPara) / 2;
-    return `M ${xDe} ${yA + desloca} H ${meio} V ${yB + desloca} H ${xDe} M ${meio} ${
-      (yA + yB) / 2 + desloca
-    } H ${xPara}`;
-  };
+  /** Um lado da chave: repescagem em cima, semifinal embaixo. */
+  function Chave({ lado }: { lado: "A" | "B" }) {
+    const rep = bySlot(lado === "A" ? "REP_A" : "REP_B");
+    const sf = bySlot(lado === "A" ? "SF_A" : "SF_B");
+    const venc = sf ? matchWinner(sf) : null;
+    return (
+      <section className="panel p-4 sm:p-5">
+        <h3 className="mb-4 flex items-center gap-2 font-display text-2xl font-bold uppercase tracking-wide text-ink">
+          <span className="grid h-7 w-7 place-items-center rounded border border-azul/40 bg-azul/15 text-lg text-azul">
+            {lado}
+          </span>
+          Chave {lado}
+        </h3>
 
-  const linhas = [
-    // repescagem → vencedor entra na semi
-    traco(yRepA + H / 2, yRepA + H + GAP_PAR + H / 2, fimCol(0), COL[1].x),
-    traco(yRepB + H / 2, yRepB + H + GAP_PAR + H / 2, fimCol(0), COL[1].x),
-    // semi → final
-    traco(ySfA_head + H / 2, ySfA_risen + H / 2, fimCol(1), COL[2].x),
-    traco(ySfB_head + H / 2, ySfB_risen + H / 2, fimCol(1), COL[2].x),
-    // final → campeão
-    traco(yFinA + H / 2, yFinB + H / 2, fimCol(2), COL[3].x),
-  ];
+        <div className="space-y-5 pr-4 sm:pr-6">
+          <Confronto
+            match={rep}
+            label="Repescagem"
+            seeds={lado === "A" ? ["4º", "5º"] : ["3º", "6º"]}
+          />
 
-  const rotulo = (texto: string) => (
-    <span className="font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
-      {texto}
-    </span>
-  );
+          <div className="flex items-center gap-2 pl-1 text-ink-muted/70">
+            <span className="font-display text-[11px] uppercase tracking-[0.25em]">
+              vencedor sobe
+            </span>
+            <span aria-hidden>↓</span>
+          </div>
+
+          <Confronto
+            match={sf}
+            label="Semifinal"
+            seeds={lado === "A" ? ["1º"] : ["2º"]}
+            placeholders={[undefined, "Venc. repescagem"]}
+          />
+        </div>
+
+        <p className="mt-4 border-t border-line pt-3 font-display text-sm uppercase tracking-widest text-ink-muted">
+          Finalista:{" "}
+          <span className={venc ? "text-branco" : "text-ink-muted/50"}>
+            {venc ? get(venc)?.name : "a definir"}
+          </span>
+        </p>
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-5">
       {/* ================= TELÃO / DESKTOP ================= */}
-      <div className="hidden md:block">
-        <div className="mb-3 grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-          <div>{rotulo("Repescagem")}</div>
-          <div>{rotulo("Semifinais")}</div>
-          <div>{rotulo("Final")}</div>
-          <div className="text-right">{rotulo("Campeão")}</div>
+      <div className="hidden space-y-5 md:block">
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Chave lado="A" />
+          <Chave lado="B" />
         </div>
 
-        <div className="relative" style={{ height: altura }}>
-          <svg
-            className="pointer-events-none absolute inset-0 h-full w-full"
-            viewBox={`0 0 100 ${altura}`}
-            preserveAspectRatio="none"
-          >
-            {linhas.map((d, i) => (
-              <path
-                key={i}
-                d={d}
-                fill="none"
-                stroke="rgba(234,240,255,0.35)"
-                strokeWidth={1.5}
-                vectorEffect="non-scaling-stroke"
+        {/* Final: sai das duas chaves */}
+        <section className="panel p-5">
+          <h3 className="mb-4 text-center font-display text-2xl font-bold uppercase tracking-[0.2em] text-azul">
+            Final
+          </h3>
+          <div className="grid items-center gap-5 lg:grid-cols-[1fr_auto_1fr]">
+            <div className="space-y-1.5">
+              <Barra
+                {...sideOf(finalM, "home")}
+                player={get(sideOf(finalM, "home").id)}
+                h={H}
+                placeholder="Venc. chave A"
               />
-            ))}
-          </svg>
+              <Barra
+                {...sideOf(finalM, "away")}
+                player={get(sideOf(finalM, "away").id)}
+                h={H}
+                placeholder="Venc. chave B"
+              />
+            </div>
 
-          {/* coluna 1 — repescagens */}
-          <div style={at(0, yRepA)}>
-            <Barra {...sideOf(repA, "home")} player={get(sideOf(repA, "home").id)} seed="4º" h={H} />
-          </div>
-          <div style={at(0, yRepA + H + GAP_PAR)}>
-            <Barra {...sideOf(repA, "away")} player={get(sideOf(repA, "away").id)} seed="5º" h={H} />
-          </div>
-          <div style={at(0, yRepB)}>
-            <Barra {...sideOf(repB, "home")} player={get(sideOf(repB, "home").id)} seed="3º" h={H} />
-          </div>
-          <div style={at(0, yRepB + H + GAP_PAR)}>
-            <Barra {...sideOf(repB, "away")} player={get(sideOf(repB, "away").id)} seed="6º" h={H} />
-          </div>
-
-          {/* coluna 2 — semifinais (cabeça de chave + quem subiu) */}
-          <div style={at(1, ySfA_head)}>
-            <Barra {...sideOf(sfA, "home")} player={get(sideOf(sfA, "home").id)} seed="1º" h={H} />
-          </div>
-          <div style={at(1, ySfA_risen)}>
-            <Barra
-              {...sideOf(sfA, "away")}
-              player={get(sideOf(sfA, "away").id)}
-              h={H}
-              placeholder="Repescagem"
-            />
-          </div>
-          <div style={at(1, ySfB_head)}>
-            <Barra {...sideOf(sfB, "home")} player={get(sideOf(sfB, "home").id)} seed="2º" h={H} />
-          </div>
-          <div style={at(1, ySfB_risen)}>
-            <Barra
-              {...sideOf(sfB, "away")}
-              player={get(sideOf(sfB, "away").id)}
-              h={H}
-              placeholder="Repescagem"
-            />
-          </div>
-
-          {/* coluna 3 — final */}
-          <div style={at(2, yFinA)}>
-            <Barra
-              {...sideOf(finalM, "home")}
-              player={get(sideOf(finalM, "home").id)}
-              h={H}
-              placeholder="Venc. semi A"
-            />
-          </div>
-          <div style={at(2, yFinB)}>
-            <Barra
-              {...sideOf(finalM, "away")}
-              player={get(sideOf(finalM, "away").id)}
-              h={H}
-              placeholder="Venc. semi B"
-            />
-          </div>
-
-          {/* coluna 4 — campeão */}
-          <div style={at(3, yCampeao)}>
-            <div className="relative">
+            <div className="flex flex-col items-center justify-center px-4">
               <div
-                className="pointer-events-none absolute left-1/2 -translate-x-1/2 select-none leading-none"
-                style={{ top: -(big ? 62 : 46), fontSize: big ? 52 : 38 }}
+                className="select-none leading-none"
+                style={{
+                  fontSize: big ? 74 : 56,
+                  filter: "drop-shadow(0 10px 30px rgba(62,155,233,0.45))",
+                }}
               >
                 🏆
               </div>
-              <Barra
-                player={get(championId)}
-                state={championId ? "winner" : "idle"}
-                h={H}
-                placeholder="A definir"
-                destaque={!championId}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 3º lugar fora da árvore: é decidido antes da final */}
-        <div className="mt-6 flex justify-center">
-          <div className="panel w-full max-w-xl px-4 py-2.5">
-            <div className="mb-1 text-center font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
-              🥉 Disputa de 3º lugar
-            </div>
-            <MobileRow match={bySlot("TERCEIRO")} byId={byId} />
-            {third && (
-              <div className="pb-1 text-center font-display text-sm uppercase tracking-widest text-ink-muted">
-                3º lugar: <span className="text-ink">{get(third)?.name}</span>
+              <div className="mt-1 font-display text-[11px] uppercase tracking-[0.34em] text-ink-muted">
+                Campeão
               </div>
-            )}
-          </div>
-        </div>
+              <div
+                className={`font-display font-black uppercase tracking-wide ${
+                  championId ? "text-branco" : "text-ink-muted/50"
+                }`}
+                style={{ fontSize: big ? 42 : 30 }}
+              >
+                {championId ? get(championId)?.name : "a definir"}
+              </div>
+              {championId && runnerUpId && (
+                <div className="font-display text-sm uppercase tracking-widest text-ink-muted">
+                  vice: {get(runnerUpId)?.name}
+                </div>
+              )}
+            </div>
 
-        <p className="mt-4 text-center text-xs text-ink-muted">
+            {/* 3º lugar ao lado: é decidido antes da final */}
+            <div>
+              <div className="mb-1.5 font-display text-[11px] uppercase tracking-[0.3em] text-ink-muted/70">
+                🥉 Disputa de 3º lugar
+              </div>
+              <div className="space-y-1.5">
+                <Barra
+                  {...sideOf(bySlot("TERCEIRO"), "home")}
+                  player={get(sideOf(bySlot("TERCEIRO"), "home").id)}
+                  h={H}
+                  placeholder="Perd. semi A"
+                />
+                <Barra
+                  {...sideOf(bySlot("TERCEIRO"), "away")}
+                  player={get(sideOf(bySlot("TERCEIRO"), "away").id)}
+                  h={H}
+                  placeholder="Perd. semi B"
+                />
+              </div>
+              {third && (
+                <p className="mt-2 font-display text-sm uppercase tracking-widest text-ink-muted">
+                  3º lugar: <span className="text-ink">{get(third)?.name}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <p className="text-center text-xs text-ink-muted">
           1º e 2º entram direto na semifinal · empate no mata-mata → prorrogação → pênaltis. A chave
           avança sozinha a cada placar lançado.
         </p>
@@ -343,14 +333,14 @@ export function Bracket({
           </div>
         )}
 
-        <MobilePhase title="Repescagem">
-          <MobileRow match={repA} byId={byId} />
-          <MobileRow match={repB} byId={byId} />
+        <MobilePhase title="Chave A">
+          <MobileRow match={bySlot("REP_A")} byId={byId} />
+          <MobileRow match={bySlot("SF_A")} byId={byId} />
         </MobilePhase>
 
-        <MobilePhase title="Semifinais">
-          <MobileRow match={sfA} byId={byId} />
-          <MobileRow match={sfB} byId={byId} />
+        <MobilePhase title="Chave B">
+          <MobileRow match={bySlot("REP_B")} byId={byId} />
+          <MobileRow match={bySlot("SF_B")} byId={byId} />
         </MobilePhase>
 
         <MobilePhase title="3º lugar" note="decidido antes da final">

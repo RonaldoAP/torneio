@@ -53,7 +53,7 @@ export function TabBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-base/70 backdrop-blur-xl">
-      <div ref={boxRef} className="mx-auto max-w-5xl px-3 sm:px-4">
+      <div ref={boxRef} className="relative mx-auto max-w-5xl px-3 sm:px-4">
         <div className="flex items-center justify-between gap-3 py-3">
           <Link href="/" className="flex shrink-0 items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-lg border border-azul/40 bg-azul/15 font-display text-xl text-azul">
@@ -97,8 +97,13 @@ export function TabBar() {
           </div>
         </div>
 
+        {/* Suspenso: flutua sobre o conteúdo, sem empurrar a página para baixo. */}
         {aberto && (
-          <nav id="menu-principal" className="pb-3" aria-label="Seções">
+          <nav
+            id="menu-principal"
+            aria-label="Seções"
+            className="absolute left-3 right-3 top-full z-50 origin-top animate-reveal rounded-xl border border-white/10 bg-base/95 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:left-4 sm:right-4"
+          >
             <ul className="grid gap-1.5 sm:grid-cols-2">
               {tabs.map((t) => {
                 const on = ativo(t.href);

@@ -72,9 +72,11 @@ export function StandingsTable({
                       }`}
                     />
                     <span
-                      className={`ml-2 w-6 text-center font-display tabular ${
-                        big ? "text-2xl" : "text-base"
-                      } ${qualified ? "text-azul" : "text-ink-muted"}`}
+                      className={`ml-2 w-7 text-center font-display font-bold tabular ${
+                        big ? "text-3xl" : "text-xl"
+                      }`}
+                      // classificado em azul, quem está fora em branco
+                      style={{ color: qualified ? "#3E9BE9" : "#FFFFFF" }}
                     >
                       {pos}
                     </span>
