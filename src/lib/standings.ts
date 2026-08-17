@@ -130,6 +130,16 @@ export function computeStandings(players: Player[], matches: Match[]): StandingR
     }
   }
 
+  // O ⚠ de empate só faz sentido quando a liga acabou: é aí que o empate
+  // precisa de partida de desempate para montar o mata-mata. Antes disso todo
+  // mundo empata em algum momento (no começo, todos com 0), e marcar a tabela
+  // inteira só polui — o desempate ainda pode se resolver sozinho na rodada
+  // seguinte.
+  const ligaMatches = matches.filter((m) => m.stage === "liga");
+  const ligaCompleta =
+    ligaMatches.length > 0 &&
+    ligaMatches.every((m) => m.home_goals != null && m.away_goals != null);
+
   const list = [...rows.values()];
   for (const r of list) {
     r.goalDiff = r.goalsFor - r.goalsAgainst;
@@ -176,7 +186,7 @@ export function computeStandings(players: Player[], matches: Match[]): StandingR
         const startPos = i; // 0-based
         const endPos = j - 1;
         const affectsCut = startPos <= TOP_N - 1 && endPos >= TOP_N - 1;
-        for (const g of group) g.unresolvedTie = affectsCut;
+        for (const g of group) g.unresolvedTie = affectsCut && ligaCompleta;
       }
 
       for (let k = 0; k < group.length; k++) list[i + k] = group[k];

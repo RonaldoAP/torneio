@@ -7,8 +7,8 @@ import { Avatar } from "@/components/ui";
 /**
  * Classificação no formato das tabelas de TV da Champions (referência do
  * organizador): barra de posição colorida, escudo (foto) + nome em caixa alta
- * condensada, colunas PJ V E D GOLS PTS. "GOLS" traz marcados:sofridos — o saldo
- * sai daí, e continua valendo como 3º critério de desempate.
+ * condensada, e os números na ordem que o organizador lê primeiro: PTS na frente,
+ * depois PJ V E D e os gols separados (GM marcados · GC sofridos · SG saldo).
  */
 export function StandingsTable({
   players,
@@ -36,12 +36,20 @@ export function StandingsTable({
           <tr className="border-b border-line">
             <th className={`${th} pl-3 text-left`} />
             <th className={`${th} text-left`}>Participante</th>
+            <th className={`${th} text-center text-branco`}>Pts</th>
             <th className={`${th} text-center`}>PJ</th>
             <th className={`${th} text-center`}>V</th>
             <th className={`${th} text-center`}>E</th>
             <th className={`${th} text-center`}>D</th>
-            <th className={`${th} text-center`}>Gols</th>
-            <th className={`${th} text-center text-branco`}>Pts</th>
+            <th className={`${th} text-center`} title="Gols marcados">
+              GM
+            </th>
+            <th className={`${th} text-center`} title="Gols sofridos">
+              GC
+            </th>
+            <th className={`${th} text-center`} title="Saldo de gols">
+              SG
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -95,17 +103,21 @@ export function StandingsTable({
                   </span>
                 </td>
 
+                <td className={`${num} font-black text-branco ${big ? "text-4xl" : "text-xl"}`}>
+                  {r.points}
+                </td>
                 <td className={`${num} text-ink-muted`}>{r.played}</td>
                 <td className={num}>{r.wins}</td>
                 <td className={num}>{r.draws}</td>
                 <td className={num}>{r.losses}</td>
-                <td className={`${num} whitespace-nowrap text-ink-muted`}>
-                  <span className="text-ink">{r.goalsFor}</span>
-                  <span className="mx-0.5 text-ink-muted/60">:</span>
-                  <span>{r.goalsAgainst}</span>
-                </td>
-                <td className={`${num} font-black text-branco ${big ? "text-4xl" : "text-xl"}`}>
-                  {r.points}
+                <td className={num}>{r.goalsFor}</td>
+                <td className={`${num} text-ink-muted`}>{r.goalsAgainst}</td>
+                <td
+                  className={`${num} ${
+                    r.goalDiff > 0 ? "text-emerald-400" : r.goalDiff < 0 ? "text-danger" : ""
+                  }`}
+                >
+                  {r.goalDiff > 0 ? `+${r.goalDiff}` : r.goalDiff}
                 </td>
               </tr>
             );

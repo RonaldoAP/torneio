@@ -93,3 +93,49 @@ describe("matchWinner/matchLoser", () => {
     expect(matchWinner(m)).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// O ⚠ de empate só aparece quando a liga acabou — antes disso ele marcava a
+// tabela inteira (no começo todo mundo empata em 0) sem servir para nada.
+// ---------------------------------------------------------------------------
+describe("aviso de empate no corte do Top 6", () => {
+  const nomes = ["A", "B", "C", "D", "E", "F", "G"];
+  const players: Player[] = nomes.map((n) => ({ id: n, name: n, created_at: "" }));
+
+  /** Liga completa (todos contra todos) com todos os jogos em 0×0 — empate geral. */
+  function ligaZerada(comPlacar: boolean): Match[] {
+    const ms: Match[] = [];
+    let i = 0;
+    for (let a = 0; a < nomes.length; a++) {
+      for (let b = a + 1; b < nomes.length; b++) {
+        ms.push({
+          id: `m${i++}`,
+          stage: "liga",
+          round: 1,
+          home_id: nomes[a],
+          away_id: nomes[b],
+          home_goals: comPlacar ? 0 : null,
+          away_goals: comPlacar ? 0 : null,
+          pen_winner_id: null,
+          counts_for_scorers: true,
+          slot: null,
+          created_at: "",
+        });
+      }
+    }
+    return ms;
+  }
+
+  it("não marca ninguém antes de a liga terminar", () => {
+    const semJogo = computeStandings(players, []);
+    expect(semJogo.some((r) => r.unresolvedTie)).toBe(false);
+
+    const sorteadaSemPlacar = computeStandings(players, ligaZerada(false));
+    expect(sorteadaSemPlacar.some((r) => r.unresolvedTie)).toBe(false);
+  });
+
+  it("marca quando a liga acabou empatada em cima da linha do Top 6", () => {
+    const fim = computeStandings(players, ligaZerada(true));
+    expect(fim.filter((r) => r.unresolvedTie).length).toBeGreaterThanOrEqual(2);
+  });
+});

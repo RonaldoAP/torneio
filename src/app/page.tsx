@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTournament } from "@/lib/useTournament";
 import { PageHeader, LiveBadge } from "@/components/ui";
 import { editionLabel, eventInfo } from "@/lib/editions";
@@ -31,11 +32,11 @@ const Dado = ({ rotulo, children }: { rotulo: string; children: React.ReactNode 
   </div>
 );
 
-const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }[] = [
+const RULES: { n: string; title: string; body: React.ReactNode; aberto?: boolean }[] = [
   {
     n: "01",
     title: "Formato",
-    wide: true,
+    aberto: true,
     body: (
       <Lista>
         <li>
@@ -133,7 +134,6 @@ const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }
   {
     n: "06",
     title: "Mata-mata",
-    wide: true,
     body: (
       <Lista>
         <li>Classificam-se 6. O 1º e o 2º entram direto na semifinal.</li>
@@ -195,7 +195,6 @@ const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }
   {
     n: "10",
     title: "Desistência / abandono",
-    wide: true,
     body: (
       <Lista>
         <li>
@@ -210,7 +209,6 @@ const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }
   {
     n: "11",
     title: "Premiação",
-    wide: true,
     body: (
       <ul className="grid gap-1.5 sm:grid-cols-2">
         {[
@@ -241,7 +239,6 @@ const RULES: { n: string; title: string; body: React.ReactNode; wide?: boolean }
   {
     n: "12",
     title: "Artilheiro e melhor defesa",
-    wide: true,
     body: (
       <>
         <Lista>
@@ -270,6 +267,19 @@ export default function RegulamentoPage() {
   const { config, mode, connected, loading, edition, editionInfo } = useTournament();
   const EVENT = eventInfo(editionInfo);
 
+  /** Impressão: <details> fechado não sai no papel — abre tudo antes. */
+  useEffect(() => {
+    const abrirTudo = () =>
+      document.querySelectorAll("details").forEach((d) => d.setAttribute("open", ""));
+    window.addEventListener("beforeprint", abrirTudo);
+    return () => window.removeEventListener("beforeprint", abrirTudo);
+  }, []);
+
+  function imprimir() {
+    document.querySelectorAll("details").forEach((d) => d.setAttribute("open", ""));
+    window.print();
+  }
+
   return (
     <div className="animate-reveal">
       <PageHeader
@@ -278,7 +288,7 @@ export default function RegulamentoPage() {
         right={
           <div className="flex items-center gap-2 no-print">
             <LiveBadge mode={mode} connected={connected} />
-            <button className="btn-ghost" onClick={() => window.print()}>
+            <button className="btn-ghost" onClick={imprimir}>
               Imprimir / PDF
             </button>
           </div>
@@ -296,22 +306,38 @@ export default function RegulamentoPage() {
         <p className="mt-2 text-sm text-ink-muted">⏱️ {EVENT.note}</p>
       </div>
 
-      <div className="grid items-start gap-3 sm:grid-cols-2">
+      {/* Acordeão: uma regra por linha. Só o Formato nasce aberto — o resto o
+          leitor abre conforme precisa. <details> nativo: funciona sem JS, com
+          teclado, e a impressão abre tudo antes de mandar pro papel. */}
+      <div className="space-y-2">
         {RULES.map((r) => (
-          <section
-            key={r.n}
-            className={`panel p-4 ${r.wide ? "sm:col-span-2" : ""}`}
-          >
-            <div className="mb-3 flex items-center gap-2.5 border-b border-line pb-2">
+          <details key={r.n} open={r.aberto} className="panel group overflow-hidden">
+            <summary className="flex cursor-pointer list-none items-center gap-2.5 p-4 transition-colors hover:bg-white/[0.03] [&::-webkit-details-marker]:hidden">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gremio/15 font-display text-xl text-gremio">
                 {r.n}
               </span>
-              <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-ink">
+              <h2 className="flex-1 font-display text-2xl font-bold uppercase tracking-wide text-ink">
                 {r.title}
               </h2>
+              <span
+                aria-hidden
+                className="shrink-0 text-ink-muted transition-transform duration-200 group-open:rotate-180"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </summary>
+            <div className="border-t border-line px-4 pb-4 pt-3 text-sm text-ink-muted">
+              {r.body}
             </div>
-            <div className="text-sm text-ink-muted">{r.body}</div>
-          </section>
+          </details>
         ))}
       </div>
     </div>
