@@ -422,8 +422,15 @@ Mosquito. Os outros 8 jogos do Mosquito continuam perdidos.
 
 ## 15. Dicas finais pra quem assume
 
-- Rode `npm test` — a lógica de liga, desempate, bracket, sorteio e artilharia tem
-  testes em `src/lib/__tests__/`. Mudou regra? Atualize o teste.
+- Rode `npm test` — 88 testes em `src/lib/__tests__/`. Mudou regra? Atualize o teste.
+  - `rotaAdmin.test.ts` roda o **route.ts de verdade** contra um Supabase em
+    memória (`helpers/fakeSupabase.ts`), que recusa coluna inexistente como o
+    Postgres faria.
+  - `paridade.test.ts` dá o **mesmo estado inicial e a mesma sequência** de ações
+    para o servidor e para o modo local e exige resultado idêntico — é a rede que
+    pega a divergência entre os dois espelhos.
+  - `cenarios.test.ts` cobre o dia do evento: correção de placar, empate,
+    pênaltis, desistência em vários momentos e as travas do admin.
 - **Espelhe toda mudança de regra** em `route.ts` (Supabase) **e** `adminActions.ts`
   (local). É o erro mais fácil de cometer.
 - Antes de qualquer ação destrutiva no dia do evento, **Exporte o JSON** (Backup).
