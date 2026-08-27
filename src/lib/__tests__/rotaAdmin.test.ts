@@ -80,6 +80,51 @@ describe("liga", () => {
   });
 });
 
+describe("adicionar participante", () => {
+  it("antes do sorteio, entra na tabela normalmente", async () => {
+    await chamar("add_player", { name: "Novato" });
+    await chamar("generate_league");
+    const n = banco.players.find((p) => p.name === "Novato")!;
+    const meus = liga().filter((m) => m.home_id === n.id || m.away_id === n.id);
+    expect(meus).toHaveLength(NOMES.length); // joga contra todos os outros
+    expect(liga()).toHaveLength(((NOMES.length + 1) * NOMES.length) / 2);
+  });
+
+  it("DEPOIS do sorteio, fica sem nenhum jogo até regerar", async () => {
+    await chamar("generate_league");
+    const antes = liga().length;
+    await chamar("add_player", { name: "Atrasado" });
+    const n = banco.players.find((p) => p.name === "Atrasado")!;
+
+    // entrou na lista, mas a tabela já sorteada não o inclui
+    expect(banco.players.some((p) => p.id === n.id)).toBe(true);
+    expect(liga()).toHaveLength(antes);
+    expect(liga().filter((m) => m.home_id === n.id || m.away_id === n.id)).toHaveLength(0);
+
+    // aparece na classificação com tudo zerado
+    const t = computeStandings(banco.players as any, banco.matches as any);
+    expect(t.find((r) => r.playerId === n.id)!.played).toBe(0);
+
+    // regerar resolve — e zera os placares da liga
+    await chamar("generate_league");
+    expect(liga().filter((m) => m.home_id === n.id || m.away_id === n.id).length).toBeGreaterThan(0);
+    expect(liga().every((m) => m.home_goals === null)).toBe(true);
+  });
+
+  it("passar de 12 é barrado", async () => {
+    for (const nome of ["A", "B", "C"]) await chamar("add_player", { name: nome });
+    expect(banco.players).toHaveLength(12);
+    const r = await chamar("add_player", { name: "Décimo terceiro" });
+    expect(r.status).toBe(400);
+    expect(banco.players).toHaveLength(12);
+  });
+
+  it("nome vazio é barrado", async () => {
+    const r = await chamar("add_player", { name: "   " });
+    expect(r.status).toBe(400);
+  });
+});
+
 describe("desistência no servidor", () => {
   it("marca o participante e aplica 3×0 em tudo", async () => {
     await chamar("generate_league");
