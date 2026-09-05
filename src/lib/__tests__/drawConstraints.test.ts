@@ -36,13 +36,7 @@ describe("generateBalancedLeague (restrições ocultas)", () => {
       // cada dupla se enfrenta uma vez (round-robin válido)
       expect(games.length).toBe(45);
 
-      const ronLeo = roundOf(games, id("Ronaldo"), id("Léo"));
-      const ronRiq = roundOf(games, id("Ronaldo"), id("Riquelme"));
-      const riqLeo = roundOf(games, id("Riquelme"), id("Léo"));
-
-      expect(ronLeo).toBeGreaterThanOrEqual(R - 2); // 7,8,9
-      expect(ronRiq).toBeGreaterThanOrEqual(R - 2); // 7,8,9
-      expect(riqLeo).toBeLessThanOrEqual(3); // 1,2,3
+      expect(roundOf(games, id("Riquelme"), id("Léo"))).toBeLessThanOrEqual(3); // 1,2,3
     }
   });
 
@@ -50,15 +44,31 @@ describe("generateBalancedLeague (restrições ocultas)", () => {
     const ps = players(["ronaldo", "leo", "riquelme", "a", "b", "c"]);
     const id = (n: string) => ps.find((p) => p.name === n)!.id;
     const { games } = generateBalancedLeague(ps);
-    const R = games.reduce((m, g) => Math.max(m, g.round), 0);
     expect(roundOf(games, id("riquelme"), id("leo"))).toBeLessThanOrEqual(3);
-    expect(roundOf(games, id("ronaldo"), id("leo"))).toBeGreaterThanOrEqual(R - 2);
-    expect(roundOf(games, id("ronaldo"), id("riquelme"))).toBeGreaterThanOrEqual(R - 2);
   });
 
   it("ignora restrições quando os jogadores não estão no torneio", () => {
     const ps = players(["X", "Y", "Z", "W"]);
     const { games } = generateBalancedLeague(ps);
     expect(games.length).toBe(6); // C(4,2), sem travar
+  });
+
+  // A partir da 3ª edição o Ronaldo sorteia como todo mundo: os jogos dele
+  // contra Léo e Riquelme podem cair em qualquer rodada. Em 60 sorteios é
+  // praticamente impossível cair sempre nas 3 últimas por acaso — se cair,
+  // é porque a regra voltou.
+  it("não prende mais os jogos do Ronaldo nas últimas rodadas", () => {
+    const ps = players(NAMES);
+    const id = (n: string) => ps.find((p) => p.name === n)!.id;
+    let leoCedo = false;
+    let riqCedo = false;
+    for (let t = 0; t < 60 && !(leoCedo && riqCedo); t++) {
+      const { games } = generateBalancedLeague(ps);
+      const R = games.reduce((m, g) => Math.max(m, g.round), 0);
+      if (roundOf(games, id("Ronaldo"), id("Léo")) < R - 2) leoCedo = true;
+      if (roundOf(games, id("Ronaldo"), id("Riquelme")) < R - 2) riqCedo = true;
+    }
+    expect(leoCedo).toBe(true);
+    expect(riqCedo).toBe(true);
   });
 });

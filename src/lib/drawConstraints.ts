@@ -23,8 +23,6 @@ interface RawConstraint {
 }
 
 const CONSTRAINTS: RawConstraint[] = [
-  { a: "Ronaldo", b: "Léo", window: "last3" }, // Ronaldo pega Léo nas 3 últimas
-  { a: "Ronaldo", b: "Riquelme", window: "last3" }, // Ronaldo pega Riquelme nas 3 últimas
   { a: "Riquelme", b: "Léo", window: "first3" }, // Riquelme pega Léo até a 3ª rodada
 ];
 
