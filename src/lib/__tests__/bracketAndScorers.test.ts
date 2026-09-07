@@ -107,7 +107,36 @@ describe("computeScorers", () => {
     const a = table.find((r) => r.playerId === "a")!;
     expect(a.goals).toBe(5); // 3 (liga) + 2 (final); desempate ignorado
     expect(a.games).toBe(2);
+    expect(a.conceded).toBe(3); // 1 (liga) + 2 (final)
+    expect(a.goalDiff).toBe(2);
     expect(table[0].playerId).toBe("a");
+  });
+
+  it("empate na artilharia: leva o melhor saldo", () => {
+    const matches = asMatches([
+      // A e C fazem 4 gols cada; A sofreu 1, C sofreu 3
+      { stage: "liga", home_id: "a", away_id: "b", home_goals: 4, away_goals: 1 },
+      { stage: "liga", home_id: "c", away_id: "b", home_goals: 4, away_goals: 3 },
+    ]);
+    const table = computeScorers(players, matches);
+    expect(table[0].name).toBe("A"); // 4 gols, saldo +3
+    expect(table[0].goalDiff).toBe(3);
+    expect(table[1].name).toBe("C"); // 4 gols, saldo +1
+    expect(table[1].goalDiff).toBe(1);
+  });
+
+  it("saldo igual: cai no critério antigo (menos jogos)", () => {
+    const matches = asMatches([
+      // A: 3 gols e 1 sofrido em 1 jogo → +2
+      { stage: "liga", home_id: "a", away_id: "b", home_goals: 3, away_goals: 1 },
+      // C: 3 gols e 1 sofrido em 2 jogos → também +2
+      { stage: "liga", home_id: "c", away_id: "b", home_goals: 2, away_goals: 0 },
+      { stage: "liga", home_id: "c", away_id: "b", home_goals: 1, away_goals: 1 },
+    ]);
+    const table = computeScorers(players, matches);
+    expect([table[0].goalDiff, table[1].goalDiff]).toEqual([2, 2]);
+    expect(table[0].name).toBe("A"); // mesmo saldo, mas em 1 jogo só
+    expect(table[1].name).toBe("C");
   });
 });
 
@@ -144,10 +173,11 @@ describe("melhor defesa", () => {
       jogo({ id: "3", home_id: "b", away_id: "c", home_goals: 0, away_goals: 4 }),
     ];
     const d = computeDefense(players, matches);
-    // Ana sofreu 1 · Caio sofreu 1 (mas em 2 jogos, igual à Ana) · Bia sofreu 6
+    // Ana e Caio sofreram 1; o saldo desempata: Caio +4 (5 feitos) contra
+    // Ana +2 (3 feitos). Bia sofreu 6.
     expect(d.map((r) => [r.name, r.conceded])).toEqual([
-      ["Ana", 1],
       ["Caio", 1],
+      ["Ana", 1],
       ["Bia", 6],
     ]);
     expect(d.find((r) => r.name === "Ana")!.cleanSheets).toBe(1);
@@ -179,5 +209,39 @@ describe("melhor defesa", () => {
       jogo({ id: "1", home_id: "a", away_id: "b", home_goals: 1, away_goals: 1 }),
     ]);
     expect(d.map((r) => r.name).sort()).toEqual(["Ana", "Bia"]);
+  });
+
+  it("empate nos gols sofridos: leva o melhor saldo", () => {
+    const matches = [
+      // Ana: 4 feitos, 2 sofridos → saldo +2
+      jogo({ id: "1", home_id: "a", away_id: "c", home_goals: 4, away_goals: 2 }),
+      // Bia: 9 feitos, 2 sofridos → saldo +7
+      jogo({ id: "2", home_id: "b", away_id: "d", home_goals: 9, away_goals: 2 }),
+    ];
+    const d = computeDefense(players, matches);
+    expect(d[0].name).toBe("Bia"); // mesmo 2 sofridos, saldo maior
+    expect(d[0].goalDiff).toBe(7);
+    expect(d[1].name).toBe("Ana");
+    expect(d[1].goalDiff).toBe(2);
+  });
+
+  it("o saldo do desempate também ignora W.O. e partida de desempate", () => {
+    const matches = [
+      jogo({ id: "1", home_id: "a", away_id: "b", home_goals: 3, away_goals: 1 }),
+      // goleada por W.O.: não pode inflar o saldo da Ana
+      jogo({
+        id: "2",
+        home_id: "a",
+        away_id: "c",
+        home_goals: 3,
+        away_goals: 0,
+        counts_for_scorers: false,
+      }),
+      jogo({ id: "3", stage: "desempate", home_id: "a", away_id: "d", home_goals: 7, away_goals: 0 }),
+    ];
+    const ana = computeDefense(players, matches).find((r) => r.name === "Ana")!;
+    expect(ana.goalsFor).toBe(3);
+    expect(ana.conceded).toBe(1);
+    expect(ana.goalDiff).toBe(2);
   });
 });

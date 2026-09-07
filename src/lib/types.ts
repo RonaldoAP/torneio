@@ -85,6 +85,8 @@ export interface ScorerRow {
   name: string;
   goals: number;
   games: number; // jogos que contam
+  conceded: number; // gols sofridos nesses mesmos jogos
+  goalDiff: number; // saldo (marcados − sofridos) — desempata a artilharia
 }
 
 /** Melhor defesa: quem sofreu menos gols (mesmo filtro da artilharia). */
@@ -94,6 +96,8 @@ export interface DefenseRow {
   conceded: number; // gols sofridos
   games: number; // jogos que contam
   cleanSheets: number; // jogos sem sofrer gol
+  goalsFor: number; // gols marcados nesses mesmos jogos
+  goalDiff: number; // saldo (marcados − sofridos) — desempata a melhor defesa
 }
 
 export interface TournamentState {

@@ -243,11 +243,12 @@ const RULES: { n: string; title: string; body: React.ReactNode; aberto?: boolean
       <>
         <Lista>
           <li>
-            <Chave>Artilheiro:</Chave> quem marcar mais gols. Empate → leva quem fez em menos jogos.
+            <Chave>Artilheiro:</Chave> quem marcar mais gols. Empate → leva o{" "}
+            <Chave>melhor saldo de gols</Chave>; persistindo, quem fez em menos jogos.
           </li>
           <li>
-            <Chave>Melhor defesa:</Chave> quem sofrer menos gols. Empate → leva quem sofreu menos em
-            mais jogos.
+            <Chave>Melhor defesa:</Chave> quem sofrer menos gols. Empate → leva o{" "}
+            <Chave>melhor saldo de gols</Chave>; persistindo, quem sofreu menos em mais jogos.
           </li>
           <li>
             As duas contas somam <Chave>liga + mata-mata</Chave> e não contam gols de{" "}
@@ -256,7 +257,8 @@ const RULES: { n: string; title: string; body: React.ReactNode; aberto?: boolean
         </Lista>
         <p className="mt-2 text-xs text-ink-muted">
           Por isso a melhor defesa pode não bater com a coluna “Gols” da classificação, que soma
-          tudo — lá o W.O. precisa valer, porque decide pontos.
+          tudo — lá o W.O. precisa valer, porque decide pontos. O saldo do desempate segue a mesma
+          regra e aparece na coluna <Chave>SG</Chave> da página de Goleadores.
         </p>
       </>
     ),

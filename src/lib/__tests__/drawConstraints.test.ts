@@ -25,50 +25,69 @@ function roundOf(games: { round: number; homeId: string; awayId: string }[], a: 
   return g.round;
 }
 
-describe("generateBalancedLeague (restrições ocultas)", () => {
-  it("respeita as janelas de rodada em 20 sorteios seguidos (10 jogadores)", () => {
+describe("generateBalancedLeague", () => {
+  it("gera um round-robin válido em 20 sorteios seguidos (10 jogadores)", () => {
     const ps = players(NAMES);
-    const id = (n: string) => ps.find((p) => p.name === n)!.id;
     for (let t = 0; t < 20; t++) {
       const { games } = generateBalancedLeague(ps);
       const R = games.reduce((m, g) => Math.max(m, g.round), 0);
       expect(R).toBe(9);
-      // cada dupla se enfrenta uma vez (round-robin válido)
+      // cada dupla se enfrenta uma vez
       expect(games.length).toBe(45);
-
-      expect(roundOf(games, id("Riquelme"), id("Léo"))).toBeLessThanOrEqual(3); // 1,2,3
+      const pares = new Set(games.map((g) => [g.homeId, g.awayId].sort().join("|")));
+      expect(pares.size).toBe(45);
+      // ninguém joga duas vezes na mesma rodada
+      for (let r = 1; r <= R; r++) {
+        const daRodada = games.filter((g) => g.round === r);
+        const gente = new Set(daRodada.flatMap((g) => [g.homeId, g.awayId]));
+        expect(gente.size).toBe(daRodada.length * 2);
+      }
     }
   });
 
-  it("funciona mesmo com nome sem acento (Leo) ou minúsculo", () => {
-    const ps = players(["ronaldo", "leo", "riquelme", "a", "b", "c"]);
-    const id = (n: string) => ps.find((p) => p.name === n)!.id;
-    const { games } = generateBalancedLeague(ps);
-    expect(roundOf(games, id("riquelme"), id("leo"))).toBeLessThanOrEqual(3);
+  it("funciona com número ímpar de jogadores (alguém folga por rodada)", () => {
+    const { games } = generateBalancedLeague(players(["a", "b", "c", "d", "e"]));
+    expect(games.length).toBe(10); // C(5,2)
   });
 
-  it("ignora restrições quando os jogadores não estão no torneio", () => {
-    const ps = players(["X", "Y", "Z", "W"]);
-    const { games } = generateBalancedLeague(ps);
-    expect(games.length).toBe(6); // C(4,2), sem travar
+  it("não trava com poucos jogadores", () => {
+    const { games } = generateBalancedLeague(players(["X", "Y", "Z", "W"]));
+    expect(games.length).toBe(6); // C(4,2)
   });
 
-  // A partir da 3ª edição o Ronaldo sorteia como todo mundo: os jogos dele
-  // contra Léo e Riquelme podem cair em qualquer rodada. Em 60 sorteios é
-  // praticamente impossível cair sempre nas 3 últimas por acaso — se cair,
-  // é porque a regra voltou.
-  it("não prende mais os jogos do Ronaldo nas últimas rodadas", () => {
+  // Não existe mais nenhuma restrição oculta: nenhum confronto fica preso a uma
+  // janela de rodadas. Em 60 sorteios, cada um destes pares tem que aparecer
+  // pelo menos uma vez cedo E pelo menos uma vez tarde — se um deles ficar
+  // sempre do mesmo lado, é porque voltou regra em drawConstraints.ts.
+  it("sorteia livre: nenhum par preso ao começo ou ao fim da tabela", () => {
     const ps = players(NAMES);
     const id = (n: string) => ps.find((p) => p.name === n)!.id;
-    let leoCedo = false;
-    let riqCedo = false;
-    for (let t = 0; t < 60 && !(leoCedo && riqCedo); t++) {
+    const pares: [string, string][] = [
+      ["Ronaldo", "Léo"],
+      ["Ronaldo", "Riquelme"],
+      ["Riquelme", "Léo"],
+    ];
+    const visto = pares.map(() => ({ cedo: false, tarde: false }));
+
+    for (let t = 0; t < 60; t++) {
       const { games } = generateBalancedLeague(ps);
       const R = games.reduce((m, g) => Math.max(m, g.round), 0);
-      if (roundOf(games, id("Ronaldo"), id("Léo")) < R - 2) leoCedo = true;
-      if (roundOf(games, id("Ronaldo"), id("Riquelme")) < R - 2) riqCedo = true;
+      pares.forEach(([a, b], i) => {
+        const r = roundOf(games, id(a), id(b));
+        if (r <= 3) visto[i].cedo = true;
+        if (r >= R - 2) visto[i].tarde = true;
+      });
     }
-    expect(leoCedo).toBe(true);
-    expect(riqCedo).toBe(true);
+
+    pares.forEach(([a, b], i) => {
+      expect(visto[i], `${a} x ${b} caiu nas 3 primeiras rodadas alguma vez`).toHaveProperty(
+        "cedo",
+        true,
+      );
+      expect(visto[i], `${a} x ${b} caiu nas 3 últimas rodadas alguma vez`).toHaveProperty(
+        "tarde",
+        true,
+      );
+    });
   });
 });

@@ -22,9 +22,10 @@ interface RawConstraint {
   window: Window; // first3 = rodadas 1..3 · last3 = 3 últimas rodadas
 }
 
-const CONSTRAINTS: RawConstraint[] = [
-  { a: "Riquelme", b: "Léo", window: "first3" }, // Riquelme pega Léo até a 3ª rodada
-];
+// Vazio a partir da 3ª edição: o sorteio voltou a ser 100% aleatório, ninguém
+// tem confronto preso a uma janela de rodadas. A máquina fica de pé — é só
+// somar uma linha aqui se algum dia precisar de uma regra de novo.
+const CONSTRAINTS: RawConstraint[] = [];
 
 function norm(s: string): string {
   return s

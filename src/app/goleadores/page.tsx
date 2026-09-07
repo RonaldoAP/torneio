@@ -4,6 +4,11 @@ import { useTournament } from "@/lib/useTournament";
 import { computeDefense, computeScorers } from "@/lib/scorers";
 import { PageHeader, LiveBadge, EmptyState, Loading, Avatar } from "@/components/ui";
 
+/** Saldo com sinal, do jeito que se lê na tabela: +4, -2, 0. */
+const sg = (n: number) => (n > 0 ? `+${n}` : String(n));
+const sgCor = (n: number) =>
+  n > 0 ? "text-emerald-400" : n < 0 ? "text-danger" : "text-ink-muted";
+
 export default function GoleadoresPage() {
   const { players, matches, mode, connected, loading } = useTournament();
   const rows = computeScorers(players, matches).filter((r) => r.goals > 0);
@@ -14,7 +19,7 @@ export default function GoleadoresPage() {
     <div className="animate-reveal">
       <PageHeader
         title="Goleadores"
-        subtitle="Artilharia e melhor defesa — liga + mata-mata (sem W.O., desempate ou pênaltis)"
+        subtitle="Artilharia e melhor defesa — liga + mata-mata (sem W.O., desempate ou pênaltis). Empate nos dois prêmios: leva quem tiver o melhor saldo de gols"
         right={<LiveBadge mode={mode} connected={connected} />}
       />
 
@@ -34,6 +39,9 @@ export default function GoleadoresPage() {
                 <th className="px-3 py-2 text-center">#</th>
                 <th className="px-3 py-2 text-left">Participante</th>
                 <th className="px-3 py-2 text-center">Jogos</th>
+                <th className="px-3 py-2 text-center" title="Saldo de gols — desempata a artilharia">
+                  SG
+                </th>
                 <th className="px-3 py-2 text-center">Gols marcados</th>
               </tr>
             </thead>
@@ -64,6 +72,9 @@ export default function GoleadoresPage() {
                     </span>
                   </td>
                   <td className="px-3 py-3.5 text-center tabular text-ink-muted">{r.games}</td>
+                  <td className={`px-3 py-3.5 text-center tabular ${sgCor(r.goalDiff)}`}>
+                    {sg(r.goalDiff)}
+                  </td>
                   <td className="px-3 py-3.5 text-center">
                     <span className="font-display text-2xl leading-none text-ink">{r.goals}</span>
                   </td>
@@ -79,7 +90,8 @@ export default function GoleadoresPage() {
             <h2 className="mb-1 font-display text-xl tracking-wide">🧤 Melhor defesa</h2>
             <p className="mb-2 text-xs text-ink-muted">
               Quem sofreu menos gols. Mesma regra da artilharia: não conta W.O. nem partida de
-              desempate — por isso pode divergir da coluna GC da classificação.
+              desempate — por isso pode divergir da coluna GC da classificação. Empatou nos gols
+              sofridos? Leva quem tiver o melhor saldo.
             </p>
             <div className="panel overflow-x-auto">
               <table className="w-full text-sm">
@@ -90,6 +102,12 @@ export default function GoleadoresPage() {
                     <th className="px-3 py-2 text-center">Jogos</th>
                     <th className="px-3 py-2 text-center" title="Jogos sem sofrer gol">
                       Sem sofrer
+                    </th>
+                    <th
+                      className="px-3 py-2 text-center"
+                      title="Saldo de gols — desempata a melhor defesa"
+                    >
+                      SG
                     </th>
                     <th className="px-3 py-2 text-center">Gols sofridos</th>
                   </tr>
@@ -123,6 +141,9 @@ export default function GoleadoresPage() {
                       <td className="px-3 py-3.5 text-center tabular text-ink-muted">{r.games}</td>
                       <td className="px-3 py-3.5 text-center tabular text-ink-muted">
                         {r.cleanSheets}
+                      </td>
+                      <td className={`px-3 py-3.5 text-center tabular ${sgCor(r.goalDiff)}`}>
+                        {sg(r.goalDiff)}
                       </td>
                       <td className="px-3 py-3.5 text-center">
                         <span className="font-display text-2xl leading-none text-ink">
