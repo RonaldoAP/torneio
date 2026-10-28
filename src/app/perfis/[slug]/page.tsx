@@ -55,7 +55,7 @@ export default function PerfilPage({ params }: { params: { slug: string } }) {
         <EmptyState>
           <p>Não achamos ninguém com esse nome.</p>
           <p className="mt-2">
-            <Link href="/perfis" className="text-azul hover:underline">
+            <Link href="/historico" className="text-azul hover:underline">
               Ver todos os perfis
             </Link>
           </p>
@@ -71,7 +71,7 @@ export default function PerfilPage({ params }: { params: { slug: string } }) {
   return (
     <div className="animate-reveal">
       <div className="mb-4">
-        <Link href="/perfis" className="font-sans text-xs text-ink-muted hover:text-ink">
+        <Link href="/historico" className="font-sans text-xs text-ink-muted hover:text-ink">
           ← Todos os perfis
         </Link>
       </div>

@@ -80,12 +80,35 @@ export interface ProfileCareer {
   conceded: number;
   cleanSheets: number;
   titles: number;
+  runnerUps: number;
+  thirds: number;
   finals: number;
   podiums: number;
   topScorerAwards: number;
   bestDefenseAwards: number;
+  /** vezes que terminou a liga dentro do Top 6 */
+  top6: number;
+  lastPlaces: number;
   bestPosition: number | null;
+  /** nota de carreira — ver PESOS */
+  score: number;
 }
+
+// ---------------------------------------------------------------------------
+// Nota de carreira: título, prêmio e pódio pesam muito mais que campanha.
+// O aproveitamento entra dividido por 10 (0 a 10 pontos) de propósito: serve
+// para desempatar duas fichas parecidas, nunca para passar na frente de quem
+// tem uma medalha a mais.
+// ---------------------------------------------------------------------------
+export const PESOS = {
+  titulo: 100,
+  vice: 45,
+  terceiro: 25,
+  artilheiro: 20,
+  melhorDefesa: 20,
+  top6: 4,
+  lanterna: -8,
+} as const;
 
 export interface Profile {
   key: string;
@@ -228,11 +251,16 @@ function vazio(): ProfileCareer {
     conceded: 0,
     cleanSheets: 0,
     titles: 0,
+    runnerUps: 0,
+    thirds: 0,
     finals: 0,
     podiums: 0,
     topScorerAwards: 0,
     bestDefenseAwards: 0,
+    top6: 0,
+    lastPlaces: 0,
     bestPosition: null,
+    score: 0,
   };
 }
 
@@ -251,10 +279,14 @@ function somar(seasons: ProfileSeason[]): ProfileCareer {
     c.conceded += s.conceded;
     c.cleanSheets += s.cleanSheets;
     if (s.champion) c.titles += 1;
+    if (s.runnerUp) c.runnerUps += 1;
+    if (s.third) c.thirds += 1;
     if (s.champion || s.runnerUp) c.finals += 1;
     if (s.champion || s.runnerUp || s.third) c.podiums += 1;
     if (s.topScorer) c.topScorerAwards += 1;
     if (s.bestDefense) c.bestDefenseAwards += 1;
+    if (s.qualified) c.top6 += 1;
+    if (s.lastPlace) c.lastPlaces += 1;
     if (s.position != null && (c.bestPosition == null || s.position < c.bestPosition)) {
       c.bestPosition = s.position;
     }
@@ -262,7 +294,41 @@ function somar(seasons: ProfileSeason[]): ProfileCareer {
   c.goalDiff = c.goalsFor - c.goalsAgainst;
   // Aproveitamento: pontos ganhos sobre os que estavam em jogo (3 por partida).
   c.winRate = c.played > 0 ? Math.round((c.points / (c.played * 3)) * 100) : 0;
+  c.score =
+    PESOS.titulo * c.titles +
+    PESOS.vice * c.runnerUps +
+    PESOS.terceiro * c.thirds +
+    PESOS.artilheiro * c.topScorerAwards +
+    PESOS.melhorDefesa * c.bestDefenseAwards +
+    PESOS.top6 * c.top6 +
+    PESOS.lanterna * c.lastPlaces +
+    c.winRate / 10;
   return c;
+}
+
+/**
+ * Ordem do mural de perfis: **primeiro quem disputou mais edições** — sempre,
+ * mesmo que alguém com menos edições tenha ficha melhor. Dentro de cada grupo
+ * (3 edições, depois 2, depois 1) vale a nota de carreira.
+ */
+export function rankProfiles(profiles: Profile[]): Profile[] {
+  return [...profiles].sort((a, b) => {
+    if (b.career.editions !== a.career.editions) return b.career.editions - a.career.editions;
+    if (b.career.score !== a.career.score) return b.career.score - a.career.score;
+    if (b.career.goals !== a.career.goals) return b.career.goals - a.career.goals;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+}
+
+/** O mesmo ranking, já repartido em grupos por número de edições. */
+export function groupByEditions(profiles: Profile[]): { editions: number; profiles: Profile[] }[] {
+  const grupos: { editions: number; profiles: Profile[] }[] = [];
+  for (const p of rankProfiles(profiles)) {
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.editions === p.career.editions) ultimo.profiles.push(p);
+    else grupos.push({ editions: p.career.editions, profiles: [p] });
+  }
+  return grupos;
 }
 
 /** Acha um perfil pelo endereço (slug) ou pelo nome. */

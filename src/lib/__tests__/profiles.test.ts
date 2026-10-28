@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { buildProfiles, buildRoster, findProfile, personKey, personSlug } from "../profiles";
+import {
+  buildProfiles,
+  buildRoster,
+  findProfile,
+  groupByEditions,
+  personKey,
+  personSlug,
+  rankProfiles,
+  PESOS,
+  type Profile,
+} from "../profiles";
 import type { Edition, Match, Player } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -240,5 +250,86 @@ describe("buildRoster (banco de participantes)", () => {
     const livres = banco.filter((r) => !r.inCurrent).map((r) => r.name);
     expect(livres).not.toContain("Ronaldo");
     expect(livres.sort()).toEqual(["André", "Léo"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Ordem do mural (Histórico): edições mandam, depois a nota de carreira.
+// ---------------------------------------------------------------------------
+describe("rankProfiles / groupByEditions", () => {
+  const perfis = buildProfiles(PLAYERS, MATCHES, EDICOES);
+
+  function comCarreira(nome: string, editions: number, patch: Partial<Profile["career"]>) {
+    const base = perfis[0];
+    return {
+      ...base,
+      key: nome.toLowerCase(),
+      slug: nome.toLowerCase(),
+      name: nome,
+      career: { ...base.career, ...patch, editions },
+    } as Profile;
+  }
+
+  it("quem fez mais edições vem primeiro, mesmo com ficha pior", () => {
+    const veterano = comCarreira("Veterano", 3, {
+      titles: 0,
+      runnerUps: 0,
+      thirds: 0,
+      topScorerAwards: 0,
+      bestDefenseAwards: 0,
+      top6: 0,
+      lastPlaces: 3,
+      winRate: 10,
+      score: 0,
+    });
+    // recalcula a nota do jeito que o app faz
+    const estrela = comCarreira("Estrela", 1, { score: 1000 });
+    const vet = { ...veterano, career: { ...veterano.career, score: -24 } };
+    expect(rankProfiles([estrela, vet]).map((p) => p.name)).toEqual(["Veterano", "Estrela"]);
+  });
+
+  it("dentro do mesmo número de edições, a nota decide", () => {
+    const a = comCarreira("Fraco", 2, { score: 10 });
+    const b = comCarreira("Forte", 2, { score: 200 });
+    expect(rankProfiles([a, b]).map((p) => p.name)).toEqual(["Forte", "Fraco"]);
+  });
+
+  it("título pesa mais que qualquer campanha", () => {
+    const campeao = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "leo")!;
+    const semNada = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "andre")!;
+    expect(campeao.career.score).toBeGreaterThan(semNada.career.score);
+  });
+
+  it("aproveitamento nunca passa na frente de uma medalha", () => {
+    // 100% de aproveitamento vale 10 pontos; um 3º lugar vale 25
+    const craque = comCarreira("Craque", 2, { thirds: 0, winRate: 100, score: 100 / 10 });
+    const medalhista = comCarreira("Medalhista", 2, { thirds: 1, winRate: 0, score: 25 });
+    expect(rankProfiles([craque, medalhista])[0].name).toBe("Medalhista");
+  });
+
+  it("agrupa por número de edições, do maior para o menor", () => {
+    const lista = [
+      comCarreira("A", 1, { score: 5 }),
+      comCarreira("B", 3, { score: 5 }),
+      comCarreira("C", 2, { score: 5 }),
+      comCarreira("D", 3, { score: 50 }),
+    ];
+    const grupos = groupByEditions(lista);
+    expect(grupos.map((g) => g.editions)).toEqual([3, 2, 1]);
+    expect(grupos[0].profiles.map((p) => p.name)).toEqual(["D", "B"]); // nota decide
+  });
+
+  it("a nota sai dos pesos declarados", () => {
+    const leo = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "leo")!.career;
+    const esperado =
+      PESOS.titulo * leo.titles +
+      PESOS.vice * leo.runnerUps +
+      PESOS.terceiro * leo.thirds +
+      PESOS.artilheiro * leo.topScorerAwards +
+      PESOS.melhorDefesa * leo.bestDefenseAwards +
+      PESOS.top6 * leo.top6 +
+      PESOS.lanterna * leo.lastPlaces +
+      leo.winRate / 10;
+    expect(leo.score).toBeCloseTo(esperado);
   });
 });

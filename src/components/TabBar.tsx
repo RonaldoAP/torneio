@@ -12,7 +12,6 @@ const TABS = [
   { href: "/classificacao", label: "Classificação" },
   { href: "/mata-mata", label: "Mata-mata" },
   { href: "/goleadores", label: "Goleadores" },
-  { href: "/perfis", label: "Perfis" },
 ];
 
 /**
