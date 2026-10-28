@@ -133,11 +133,17 @@ export const localApi = {
       s.config = { ...s.config, ...patch };
     });
   },
-  addPlayer(name: string) {
+  addPlayer(name: string, photo: string | null = null) {
     mutate((s) => {
       const cur = currentEdition(s);
       if (s.players.filter((p) => editionOf(p) === cur).length >= 12) return;
-      s.players.push({ id: uuid(), name, created_at: new Date().toISOString(), edition: cur });
+      s.players.push({
+        id: uuid(),
+        name,
+        photo,
+        created_at: new Date().toISOString(),
+        edition: cur,
+      });
     });
   },
   /** Remove o participante E os jogos dele. Com jogos na mesa exige `force`. */

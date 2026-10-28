@@ -67,7 +67,7 @@ async function localAction(action: string, payload: any) {
       break;
     case "add_player":
       if (myPlayers.length < 12 && String(payload.name).trim()) {
-        localApi.addPlayer(String(payload.name).trim());
+        localApi.addPlayer(String(payload.name).trim(), payload?.photo ?? null);
         return;
       }
       break;
@@ -306,7 +306,8 @@ export const adminActions = {
   },
 
   setConfig: (patch: Partial<Config>) => adminActions.run("set_config", patch),
-  addPlayer: (name: string) => adminActions.run("add_player", { name }),
+  addPlayer: (name: string, photo?: string | null) =>
+    adminActions.run("add_player", { name, photo: photo ?? null }),
   /** `force` só depois de confirmar: remover apaga também os jogos do participante. */
   removePlayer: (id: string, force = false) => adminActions.run("remove_player", { id, force }),
   setPhoto: (id: string, photo: string | null) => adminActions.run("set_photo", { id, photo }),

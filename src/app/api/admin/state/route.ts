@@ -157,7 +157,11 @@ export async function POST(req: Request) {
         if (players.length >= 12) return bad("Máximo de 12 jogadores.");
         const name = String(payload?.name ?? "").trim();
         if (!name) return bad("Nome vazio.");
-        await db.from("players").insert(stamp([{ name }], multi, ed));
+        // A foto vem junto quando o participante é puxado do banco de
+        // participantes (perfil de outra edição) — assim ninguém precisa
+        // reenviar a mesma foto a cada edição.
+        const photo = typeof payload?.photo === "string" && payload.photo ? payload.photo : null;
+        await db.from("players").insert(stamp([{ name, photo }], multi, ed));
         break;
       }
 

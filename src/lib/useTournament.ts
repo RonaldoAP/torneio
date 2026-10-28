@@ -208,3 +208,82 @@ export function useEditions(): { editions: Edition[]; current: number; loading: 
 
   return { editions, current, loading };
 }
+
+// ---------------------------------------------------------------------------
+// Carga COMPLETA: todas as edições de uma vez. Só os perfis precisam disso —
+// o resto do site é sempre de uma edição só.
+// ---------------------------------------------------------------------------
+
+export interface UseAllEditionsResult {
+  players: Player[];
+  matches: Match[];
+  editions: Edition[];
+  current: number;
+  loading: boolean;
+  mode: DataMode;
+}
+
+export function useAllEditions(): UseAllEditionsResult {
+  const mode: DataMode = isSupabaseConfigured ? "supabase" : "local";
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [editions, setEditions] = useState<Edition[]>([]);
+  const [current, setCurrent] = useState<number>(FIRST_EDITION);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+
+    if (!isSupabaseConfigured) {
+      const load = () => {
+        const s = readLocal();
+        if (!alive) return;
+        setPlayers(s.players);
+        setMatches(s.matches);
+        setEditions(s.editions ?? []);
+        setCurrent(s.config.current_edition ?? FIRST_EDITION);
+        setLoading(false);
+      };
+      migrateSeed();
+      load();
+      window.addEventListener(LOCAL_EVENT, load);
+      window.addEventListener("storage", load);
+      return () => {
+        alive = false;
+        window.removeEventListener(LOCAL_EVENT, load);
+        window.removeEventListener("storage", load);
+      };
+    }
+
+    const supabase = getBrowserClient();
+    if (!supabase) return;
+    const load = async () => {
+      const [p, m, e, c] = await Promise.all([
+        supabase.from("players").select("*").order("created_at", { ascending: true }),
+        supabase.from("matches").select("*").order("created_at", { ascending: true }),
+        supabase.from("editions").select("*").order("id", { ascending: true }),
+        supabase.from("config").select("current_edition").eq("id", 1).maybeSingle(),
+      ]);
+      if (!alive) return;
+      setPlayers((p.data as Player[]) ?? []);
+      setMatches((m.data as Match[]) ?? []);
+      setEditions(e.error ? [] : ((e.data as Edition[]) ?? []));
+      setCurrent(((c.data as any)?.current_edition as number) ?? FIRST_EDITION);
+      setLoading(false);
+    };
+    load();
+
+    const channel = supabase
+      .channel("torneio-perfis")
+      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, load)
+      .subscribe();
+
+    return () => {
+      alive = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return { players, matches, editions, current, loading, mode };
+}

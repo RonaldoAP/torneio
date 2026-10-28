@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useTournament } from "@/lib/useTournament";
+import { personSlug } from "@/lib/profiles";
 import { PageHeader, LiveBadge, EmptyState, Loading, Avatar } from "@/components/ui";
 
 export default function ParticipantesPage() {
@@ -24,12 +26,21 @@ export default function ParticipantesPage() {
       ) : (
         <ol className="grid gap-2 sm:grid-cols-2">
           {players.map((p, i) => (
-            <li key={p.id} className="panel flex items-center gap-3 p-3">
-              <span className="w-5 shrink-0 text-center font-display text-lg text-ink-muted">
-                {i + 1}
-              </span>
-              <Avatar name={p.name} photo={p.photo} size={44} />
-              <span className="truncate font-display text-2xl tracking-wide text-ink">{p.name}</span>
+            <li key={p.id}>
+              {/* abre a ficha da pessoa somando todas as edições */}
+              <Link
+                href={`/perfis/${personSlug(p.name)}`}
+                className="panel flex items-center gap-3 p-3 transition-colors hover:bg-white/[0.04]"
+              >
+                <span className="w-5 shrink-0 text-center font-display text-lg text-ink-muted">
+                  {i + 1}
+                </span>
+                <Avatar name={p.name} photo={p.photo} size={44} />
+                <span className="min-w-0 flex-1 truncate font-display text-2xl tracking-wide text-ink">
+                  {p.name}
+                </span>
+                <span className="shrink-0 font-sans text-xs text-ink-muted">ver perfil →</span>
+              </Link>
             </li>
           ))}
         </ol>

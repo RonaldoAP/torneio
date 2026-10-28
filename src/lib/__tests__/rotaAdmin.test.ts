@@ -90,6 +90,17 @@ describe("adicionar participante", () => {
     expect(liga()).toHaveLength(((NOMES.length + 1) * NOMES.length) / 2);
   });
 
+  it("vem com a foto quando é puxado do banco de participantes", async () => {
+    await chamar("add_player", { name: "Volta", photo: "data:image/webp;base64,XYZ" });
+    const n = banco.players.find((p) => p.name === "Volta")!;
+    expect(n.photo).toBe("data:image/webp;base64,XYZ");
+  });
+
+  it("sem foto, o campo fica nulo (não vira string vazia)", async () => {
+    await chamar("add_player", { name: "SemFoto" });
+    expect(banco.players.find((p) => p.name === "SemFoto")!.photo).toBeNull();
+  });
+
   it("DEPOIS do sorteio, fica sem nenhum jogo até regerar", async () => {
     await chamar("generate_league");
     const antes = liga().length;

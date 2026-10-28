@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useTournament } from "@/lib/useTournament";
+import { useAllEditions, useTournament } from "@/lib/useTournament";
+import { buildRoster } from "@/lib/profiles";
 import { adminActions, setAdminSlug } from "@/lib/adminActions";
 import { computeStandings, TOP_N } from "@/lib/standings";
 import { computeDefense, computeScorers } from "@/lib/scorers";
@@ -21,6 +22,14 @@ export function AdminApp({ slug }: { slug?: string }) {
   const { mode, players, matches, config, edition, editionInfo } = state;
   const isLocal = mode === "local";
   const ev = eventInfo(editionInfo);
+
+  // Banco de participantes: todo mundo que já jogou qualquer edição. Precisa
+  // dos dados de TODAS as edições, por isso a carga própria.
+  const todas = useAllEditions();
+  const banco = useMemo(
+    () => buildRoster(todas.players, todas.matches, todas.editions, edition).filter((r) => !r.inCurrent),
+    [todas.players, todas.matches, todas.editions, edition],
+  );
 
   const [name, setName] = useState("");
   const [tName, setTName] = useState(config.tournament_name);
@@ -482,6 +491,58 @@ export function AdminApp({ slug }: { slug?: string }) {
             Adicionar
           </button>
         </div>
+        {/* Banco de participantes: puxa de volta quem já jogou, com foto e tudo */}
+        {banco.length > 0 && (
+          <div className="mt-3 border-t border-line pt-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-display tracking-wide text-ink">
+                Banco de participantes{" "}
+                <span className="font-sans text-xs text-ink-muted">({banco.length} fora desta edição)</span>
+              </h3>
+              <button
+                className="btn-ghost px-2 py-1 text-xs"
+                disabled={players.length >= 12}
+                onClick={async () => {
+                  const cabem = banco.slice(0, Math.max(0, 12 - players.length));
+                  if (cabem.length === 0) return;
+                  if (!confirm(`Adicionar ${cabem.length} participante(s) do banco?`)) return;
+                  for (const r of cabem) {
+                    await act(() => adminActions.addPlayer(r.name, r.photo));
+                  }
+                  setInfo(`${cabem.length} participante(s) adicionados com a foto.`);
+                }}
+              >
+                Adicionar todos ({Math.min(banco.length, Math.max(0, 12 - players.length))})
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-ink-muted">
+              Quem já disputou alguma edição. Um clique traz a pessoa de volta{" "}
+              <strong className="text-ink">com a foto</strong> — não precisa digitar nem reenviar nada.
+            </p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {banco.map((r) => (
+                <li key={r.key}>
+                  <button
+                    className="flex items-center gap-2 border border-line bg-base/40 px-2 py-1.5 text-left transition-colors hover:border-azul/60 hover:bg-azul/10 disabled:opacity-40"
+                    disabled={players.length >= 12}
+                    title={`Disputou: ${r.editions.map((e) => `${e}ª`).join(", ")}`}
+                    onClick={() =>
+                      act(() => adminActions.addPlayer(r.name, r.photo), `${r.name} adicionado.`)
+                    }
+                  >
+                    <Avatar name={r.name} photo={r.photo} size={28} />
+                    <span className="font-display text-lg tracking-wide">{r.name}</span>
+                    <span className="font-sans text-[10px] text-ink-muted">
+                      {r.editions.map((e) => `${e}ª`).join(" ")}
+                    </span>
+                    <span className="font-sans text-xs text-azul">+</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {players.map((p, i) => (
             <li key={p.id} className="flex items-center gap-3 rounded-lg border border-line bg-base/40 px-3 py-2">
