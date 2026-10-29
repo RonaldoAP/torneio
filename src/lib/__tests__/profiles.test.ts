@@ -3,7 +3,6 @@ import {
   buildProfiles,
   buildRoster,
   findProfile,
-  groupByEditions,
   personKey,
   personSlug,
   rankProfiles,
@@ -256,7 +255,7 @@ describe("buildRoster (banco de participantes)", () => {
 // ---------------------------------------------------------------------------
 // Ordem do mural (Histórico): edições mandam, depois a nota de carreira.
 // ---------------------------------------------------------------------------
-describe("rankProfiles / groupByEditions", () => {
+describe("rankProfiles (ranking geral)", () => {
   const perfis = buildProfiles(PLAYERS, MATCHES, EDICOES);
 
   function comCarreira(nome: string, editions: number, patch: Partial<Profile["career"]>) {
@@ -270,33 +269,32 @@ describe("rankProfiles / groupByEditions", () => {
     } as Profile;
   }
 
-  it("quem fez mais edições vem primeiro, mesmo com ficha pior", () => {
-    const veterano = comCarreira("Veterano", 3, {
-      titles: 0,
-      runnerUps: 0,
-      thirds: 0,
-      topScorerAwards: 0,
-      bestDefenseAwards: 0,
-      top6: 0,
-      lastPlaces: 3,
-      winRate: 10,
-      score: 0,
-    });
-    // recalcula a nota do jeito que o app faz
-    const estrela = comCarreira("Estrela", 1, { score: 1000 });
-    const vet = { ...veterano, career: { ...veterano.career, score: -24 } };
-    expect(rankProfiles([estrela, vet]).map((p) => p.name)).toEqual(["Veterano", "Estrela"]);
+  it("é um ranking só: mais edições NÃO passa na frente de ficha melhor", () => {
+    const veterano = comCarreira("Veterano", 5, { score: 10 });
+    const estrela = comCarreira("Estrela", 1, { score: 120 });
+    expect(rankProfiles([veterano, estrela]).map((p) => p.name)).toEqual(["Estrela", "Veterano"]);
   });
 
-  it("dentro do mesmo número de edições, a nota decide", () => {
-    const a = comCarreira("Fraco", 2, { score: 10 });
-    const b = comCarreira("Forte", 2, { score: 200 });
-    expect(rankProfiles([a, b]).map((p) => p.name)).toEqual(["Forte", "Fraco"]);
+  it("edições valem zero: duas fichas iguais empatam, independente das copas", () => {
+    const a = buildProfiles(
+      [jogador("x1", "Xis", 1), jogador("y1", "Ipsilon", 1), jogador("y2", "Ipsilon", 2)],
+      [],
+      EDICOES,
+    );
+    const xis = a.find((p) => p.key === "xis")!;
+    const ips = a.find((p) => p.key === "ipsilon")!;
+    expect(ips.career.editions).toBe(2);
+    expect(xis.career.editions).toBe(1);
+    expect(ips.career.score).toBe(xis.career.score); // o nº de copas não soma nada
+  });
+
+  it("subir PESOS.edicao é o único jeito de premiar quilometragem", () => {
+    expect(PESOS.edicao).toBe(0);
   });
 
   it("título pesa mais que qualquer campanha", () => {
-    const campeao = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "leo")!;
-    const semNada = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "andre")!;
+    const campeao = perfis.find((p) => p.key === "leo")!;
+    const semNada = perfis.find((p) => p.key === "andre")!;
     expect(campeao.career.score).toBeGreaterThan(semNada.career.score);
   });
 
@@ -307,20 +305,15 @@ describe("rankProfiles / groupByEditions", () => {
     expect(rankProfiles([craque, medalhista])[0].name).toBe("Medalhista");
   });
 
-  it("agrupa por número de edições, do maior para o menor", () => {
-    const lista = [
-      comCarreira("A", 1, { score: 5 }),
-      comCarreira("B", 3, { score: 5 }),
-      comCarreira("C", 2, { score: 5 }),
-      comCarreira("D", 3, { score: 50 }),
-    ];
-    const grupos = groupByEditions(lista);
-    expect(grupos.map((g) => g.editions)).toEqual([3, 2, 1]);
-    expect(grupos[0].profiles.map((p) => p.name)).toEqual(["D", "B"]); // nota decide
+  it("empate na nota cai em gols e depois no nome", () => {
+    const a = comCarreira("Zeca", 1, { score: 50, goals: 10 });
+    const b = comCarreira("Ana", 3, { score: 50, goals: 10 });
+    const c = comCarreira("Bia", 2, { score: 50, goals: 99 });
+    expect(rankProfiles([a, b, c]).map((p) => p.name)).toEqual(["Bia", "Ana", "Zeca"]);
   });
 
   it("a nota sai dos pesos declarados", () => {
-    const leo = buildProfiles(PLAYERS, MATCHES, EDICOES).find((p) => p.key === "leo")!.career;
+    const leo = perfis.find((p) => p.key === "leo")!.career;
     const esperado =
       PESOS.titulo * leo.titles +
       PESOS.vice * leo.runnerUps +
@@ -329,6 +322,7 @@ describe("rankProfiles / groupByEditions", () => {
       PESOS.melhorDefesa * leo.bestDefenseAwards +
       PESOS.top6 * leo.top6 +
       PESOS.lanterna * leo.lastPlaces +
+      PESOS.edicao * leo.editions +
       leo.winRate / 10;
     expect(leo.score).toBeCloseTo(esperado);
   });

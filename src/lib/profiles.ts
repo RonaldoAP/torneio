@@ -99,6 +99,8 @@ export interface ProfileCareer {
 // O aproveitamento entra dividido por 10 (0 a 10 pontos) de propósito: serve
 // para desempatar duas fichas parecidas, nunca para passar na frente de quem
 // tem uma medalha a mais.
+// É um ranking GERAL: o número de edições não ordena nada por fora da nota —
+// entra só como mais um peso, hoje zerado.
 // ---------------------------------------------------------------------------
 export const PESOS = {
   titulo: 100,
@@ -108,6 +110,10 @@ export const PESOS = {
   melhorDefesa: 20,
   top6: 4,
   lanterna: -8,
+  /** Edições disputadas entram na conta, mas valendo nada: o ranking é por
+   *  conquista, não por quilometragem. Fica aqui como botão — subir este
+   *  número passa a premiar quem apareceu em mais copas. */
+  edicao: 0,
 } as const;
 
 export interface Profile {
@@ -302,33 +308,22 @@ function somar(seasons: ProfileSeason[]): ProfileCareer {
     PESOS.melhorDefesa * c.bestDefenseAwards +
     PESOS.top6 * c.top6 +
     PESOS.lanterna * c.lastPlaces +
+    PESOS.edicao * c.editions +
     c.winRate / 10;
   return c;
 }
 
 /**
- * Ordem do mural de perfis: **primeiro quem disputou mais edições** — sempre,
- * mesmo que alguém com menos edições tenha ficha melhor. Dentro de cada grupo
- * (3 edições, depois 2, depois 1) vale a nota de carreira.
+ * Ranking GERAL do mural: uma lista só, da maior nota para a menor.
+ * O número de edições não ordena por fora — ele já está dentro da nota, com o
+ * peso `PESOS.edicao` (hoje 0). Empate na nota cai em gols e depois no nome.
  */
 export function rankProfiles(profiles: Profile[]): Profile[] {
   return [...profiles].sort((a, b) => {
-    if (b.career.editions !== a.career.editions) return b.career.editions - a.career.editions;
     if (b.career.score !== a.career.score) return b.career.score - a.career.score;
     if (b.career.goals !== a.career.goals) return b.career.goals - a.career.goals;
     return a.name.localeCompare(b.name, "pt-BR");
   });
-}
-
-/** O mesmo ranking, já repartido em grupos por número de edições. */
-export function groupByEditions(profiles: Profile[]): { editions: number; profiles: Profile[] }[] {
-  const grupos: { editions: number; profiles: Profile[] }[] = [];
-  for (const p of rankProfiles(profiles)) {
-    const ultimo = grupos[grupos.length - 1];
-    if (ultimo && ultimo.editions === p.career.editions) ultimo.profiles.push(p);
-    else grupos.push({ editions: p.career.editions, profiles: [p] });
-  }
-  return grupos;
 }
 
 /** Acha um perfil pelo endereço (slug) ou pelo nome. */

@@ -71,9 +71,9 @@ export default function HistoricoPage() {
             <section>
               <h2 className="font-display text-2xl tracking-wide">Perfis</h2>
               <p className="mb-3 mt-1 font-sans text-xs text-ink-muted">
-                Quem disputou mais edições vem primeiro. Dentro de cada grupo, a ordem é por
-                títulos, prêmios e pódios — campanha e aproveitamento só desempatam. Clique num box
-                para ver a ficha completa.
+                Ranking geral por títulos, prêmios e pódios — campanha e aproveitamento só
+                desempatam. O número de edições não dá pontos. Clique num box para ver a ficha
+                completa.
               </p>
               <ProfileGrid profiles={perfis} />
             </section>
